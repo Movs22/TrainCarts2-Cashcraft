@@ -1,6 +1,13 @@
 # Compiled class file
 *.class
 
+# Classpath file
+.classpath
+
+# Maven's target folder
+target/*
+
+
 # Log file
 *.log
 
