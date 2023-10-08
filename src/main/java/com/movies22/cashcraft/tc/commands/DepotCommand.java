@@ -180,7 +180,13 @@ public class DepotCommand implements CommandExecutor {
 				msg = append(msg, name);
 				TextComponent colour = new TextComponent(ChatColor.YELLOW + " - Depot code: " + ChatColor.GREEN + d.code );
 				msg = append(msg, colour);
-				TextComponent nt = new TextComponent(ChatColor.YELLOW + "\n - Next train in: " + ChatColor.GREEN + b.get(0 ) + " seconds" );
+				String c;
+				if(b.size() == 0) {
+					c = "§cNO SERVICES";
+				} else {
+					c = Integer.toString(b.get(0)) + " seconds" ;
+				}
+				TextComponent nt = new TextComponent(ChatColor.YELLOW + "\n - Next train in: " + ChatColor.GREEN + c );
 				msg = append(msg, nt);
 				TextComponent lanes = new TextComponent(ChatColor.YELLOW + "\n - Depot lanes: " + ChatColor.GREEN);
 				msg = append(msg, lanes);

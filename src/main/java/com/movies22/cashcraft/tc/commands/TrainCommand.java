@@ -90,7 +90,7 @@ public class TrainCommand implements CommandExecutor {
 				return true;
 			}
 			MinecartGroup g = m.getGroup();
-			g.virtualize();
+			//g.virtualize();
 			sender.sendMessage(ChatColor.YELLOW + "This train has been virtualized.");
 		} else if (args[0].equals("load") && sender.isOp()) {
 			if(!(sender instanceof Player)) {
@@ -102,7 +102,7 @@ public class TrainCommand implements CommandExecutor {
 				return true;
 			}
 			MinecartGroup g = m.getGroup();
-			g.unVirtualize();
+			//g.unVirtualize();
 			sender.sendMessage(ChatColor.YELLOW + "This train has been un-virtualized.");
 		} else if (args[0].equals("destination")) {
 			if(!(sender instanceof Player)) {

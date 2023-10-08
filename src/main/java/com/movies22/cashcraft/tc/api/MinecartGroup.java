@@ -50,6 +50,8 @@ public class MinecartGroup {
 	public int nextTrain = 0;
 	public Location lastCurve = null;
 	public Boolean virtualized = false;
+	public Boolean isEmpty = true;
+	public Boolean canProceed = true;
 	public List<ForcedChunk> chunks = new ArrayList<ForcedChunk>();
 	public MinecartGroup(MetroLine line, String headcode, int length) {
 		this.setLine(line);
@@ -121,6 +123,14 @@ public class MinecartGroup {
 	}
 	
 	public PathRoute loadNextRoute(Boolean f, Boolean h) {
+		if(this.head() != null) {
+			if(this.head().getNextNode() != null) {
+				this.head().getNextNode().onBlock = null;
+				if(this.head().getNextNode(1) != null) {
+					this.head().getNextNode(1).onBlock = null;
+				}
+			}
+		}
 		PathRoute r = this.routes.get(0).clone();
 		this.currentRoute = r.clone();
 		if(h) {
@@ -201,9 +211,7 @@ public class MinecartGroup {
 	private LongHashSet loadChunksBuffer() {
         chunksBuffer.clear();
         for (MinecartMember mm : this.getMembers()) {
-        	if(!mm.virtualized) {
-        		chunksBuffer.add(mm.getEntity().getLocation().getChunk().getX(), mm.getEntity().getLocation().getChunk().getZ());
-        	}
+        	chunksBuffer.add(mm.getEntity().getLocation().getChunk().getX(), mm.getEntity().getLocation().getChunk().getZ());
         }
         return chunksBuffer;
     }
@@ -237,9 +245,11 @@ public class MinecartGroup {
 					});
 				}
 			}
+			this.isEmpty = true;
 		for (MinecartMember m : this.getMembers()) {
 			m.getEntity().getPassengers().forEach(r -> {
 				if (r instanceof Player) {
+					this.isEmpty = false;
 					Player p = (Player) r;
 					if(reason != null ) {
 						p.spigot().sendMessage(ChatMessageType.ACTION_BAR, ComponentSerializer.parse("{\"text\":\"" + label + "\", \"color\":\"dark_red\",\"bold\":true}"));
@@ -258,6 +268,9 @@ public class MinecartGroup {
 		}
 		if(this.head().getNextNode() != null) {
 			this.head().getNextNode().onBlock = null;
+			if(this.head().getNextNode(1) != null) {
+				this.head().getNextNode(1).onBlock = null;
+			}
 		}
 			this.line.removeTrain(this);
 			return true;
@@ -323,9 +336,16 @@ public class MinecartGroup {
 		this.members.forEach(m -> {
 			TrainCarts.plugin.MemberStore.addMember(m);
 		});
+		if(this.head().getNextNode() != null) {
+			this.head().getNextNode().onBlock = null;
+			if(this.head().getNextNode(1) != null) {
+				this.head().getNextNode(1).onBlock = null;
+			}
+		}
 		this.head().lastAction = this.tail().lastAction;
 		this.tail().lastAction = null;
-	}
+		
+		}
 	
 	public void removeMember(MinecartMember m) {
 		int i = this.members.indexOf(m);
@@ -386,6 +406,10 @@ public class MinecartGroup {
 	}
 	
 	public MinecartMember tail() {
+		return tail(0);
+	}
+	
+	public MinecartMember tail(int z) {
 		if(this.members.size() == 0) {
 			int i = 0;
 			while(this.members.size() == 0 && i < 100) {
@@ -395,7 +419,15 @@ public class MinecartGroup {
 				return null;
 			}
 		}
-		return this.members.get(this.members.size() - 1);
+		if((this.members.size() - 1 - z) > 0) {
+			return this.members.get(this.members.size() - 1 - z);
+		} else {
+			if(this.members.size() - 1 > 0) {
+				return this.tail(0);
+			} else {
+				return null;
+			}
+		}
 	}
 	public void setRoute(List<PathOperation> route) {
 		this.members.forEach(m -> {
@@ -460,7 +492,7 @@ public class MinecartGroup {
 		});
 	}
 	
-	public void virtualize() {
+	/*public void virtualize() {
 		this.head().spawned = false;
 		this.virtualized = true;
 		for(int i = 1; i < this.members.size(); i++) {
@@ -484,5 +516,5 @@ public class MinecartGroup {
 			}
 		}
 		this.virtualized = false;
-	}
+	}*/
 }

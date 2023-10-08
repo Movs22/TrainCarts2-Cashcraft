@@ -23,21 +23,16 @@ public class PisController {
 	}
 	
 	public void updateSigns() {
-		HashMap<String, PIS> pis2 = (HashMap<String, PIS>) this.pis.clone();
-		pis2.values().forEach(pis -> {
+		this.pis.values().forEach(pis -> {
 			Variables.get(pis.name).set(pis.variable);
 		});
-		pis2.clear();
-		pis2 = null;
 	}
 	
 	public void updateTimers() {
-		HashMap<String, PIS> pis2 = (HashMap<String, PIS>) this.pis.clone();
-		pis2.values().forEach(pis -> {
+		this.pis.values().forEach(pis -> {
 			pis.doStep();
 		});
-		pis2.clear();
-		pis2 = null;
+		
 	}
 	
 	

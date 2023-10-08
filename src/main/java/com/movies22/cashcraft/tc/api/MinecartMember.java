@@ -1,6 +1,7 @@
 package com.movies22.cashcraft.tc.api;
 
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -15,7 +16,7 @@ import com.movies22.cashcraft.tc.signactions.SignAction;
 
 public class MinecartMember implements Comparable<MinecartMember> {
 	private MinecartGroup group;
-	private VirtualMinecart entity;
+	private Minecart entity;
 	public Double _mod = 1.0;
 	public Double currentSpeed = 0.0;
 	private List<PathOperation> route = null;
@@ -35,12 +36,13 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		this.facing = g._getSpawn().direction;
 		this.index = i;
 		this.spawned = false;
+		this.entity = e;
 		TrainCarts.plugin.MemberStore.addMember(e.getUniqueId(), this);
-		if(i == 0) {
+		/*if(i == 0) {
 			this.setEntity(new VirtualMinecart(e, this, 0.0d));
 		} else {
 			this.setEntity(new VirtualMinecart(e, group.head(), i*1.5d));
-		}
+		}*/
 	}
 	
 	
@@ -75,10 +77,10 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		this.group = group;
 	}
 	public Minecart getEntity() {
-		return (Minecart) entity.getEntity();
+		return (Minecart) this.entity;
 	}
-	public void setEntity(VirtualMinecart entity) {
-		this.entity = entity;
+	public void setEntity(Minecart e) {
+		this.entity = e;
 	}
 	
 	public MinecartMember nextCart() {
@@ -94,6 +96,7 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	public Location getNextLocation() {
 		if(this.route == null) return null;
 		if(this.route.size() == 0) {
+			this.group.destroy();
 			return null;
 		}
 		if(this.route.get(0).locs.size() < 1) {
@@ -106,9 +109,14 @@ public class MinecartMember implements Comparable<MinecartMember> {
 				this.loadNextRoute();
 			} 
 		}
+		if(this.route.size() == 0) {
+			this.group.destroy();
+			return null;
+		}
 		if(this.route.get(0).locs.size() > 0) {
 			return this.route.get(0).locs.get(0);
 		} else {
+			this.group.destroy();
 			return null;
 		}
 	}
@@ -179,7 +187,6 @@ public class MinecartMember implements Comparable<MinecartMember> {
 			} else {
 				this.lastCon = this.route.get(0).clone();
 				this.route.remove(0);
-				//this.loadNextRoute();
 			}
 		}
 	}
@@ -193,9 +200,6 @@ public class MinecartMember implements Comparable<MinecartMember> {
 			return;
 		}
 		this.route = this.group.routes.get(0).clone().route;
-		/*if(this.index == 0) {
-			this.group.loadNextRoute();
-		}*/
 		if(this.lastCon == null) {
 			this.lastCon = this.route.get(0).clone();
 		}
@@ -218,7 +222,7 @@ public class MinecartMember implements Comparable<MinecartMember> {
         return (int)(this.index - m.index);
     }
 	
-	public Boolean virtualize() {
+	/*public Boolean virtualize() {
 		this.spawned = false;
 		this.getEntity().remove();
 		this.entity.setVirtualized(true);
@@ -233,5 +237,5 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		} else {
 			return false;
 		}
-	}
+	}*/
 }

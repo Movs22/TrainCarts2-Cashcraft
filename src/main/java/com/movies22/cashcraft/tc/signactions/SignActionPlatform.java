@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 
 import org.bukkit.Location;
@@ -13,6 +14,7 @@ import org.bukkit.block.data.type.Jigsaw.Orientation;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+import com.bergerkiller.bukkit.common.Task;
 import com.bergerkiller.bukkit.sl.API.Variables;
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
@@ -78,10 +80,21 @@ public class SignActionPlatform extends SignAction {
 	SignActionPlatform b;
 	public Timer groupAnnounceTask;
 	int stops = 0;
+	
+	Timer a;
+	Timer a2;
 	public Boolean execute(MinecartGroup group) {
+		b = null;
+		if(a2 != null) {
+			a2.cancel();
+		}
+		if(this.station.closed) {
+			group.currentRoute.stops.remove(0);
+			return true;
+		}
 		if(group.currentRoute.stops.size() > 0 && group.currentRoute.stops.get(0).equals(this)) {
 			stops = group.currentRoute.stops.size();
-			if(group.currentRoute.stops.size() == 1) {
+			if(group.currentRoute.stops.size() <= 1) {
 				if(this.reverse) {
 					group.loadNextRoute(false, true);
 					group.reverse();
@@ -143,6 +156,9 @@ public class SignActionPlatform extends SignAction {
 		if(stops == 1) {
 			ann.add("This train terminates here. All change please.");
 		}
+		group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
+		ann.remove(0);
+		if(!group.isEmpty) {
 		groupAnnounceTask = new Timer();
 		groupAnnounceTask.schedule( 
 		        new java.util.TimerTask() {
@@ -155,13 +171,15 @@ public class SignActionPlatform extends SignAction {
 		            		ann.remove(0);
 		            	} else {
 		            		this.cancel();
+		            		groupAnnounceTask = null;
 		            	}
 		            }
 		        }, 
-		        0L, 2500L
+		        2500L, 2500L
 		);
-		
-		new java.util.Timer().schedule( 
+		}
+		a = new java.util.Timer();
+		a.schedule( 
 		        new java.util.TimerTask() {
 		            @Override
 		            public void run() {
@@ -182,6 +200,10 @@ public class SignActionPlatform extends SignAction {
     }
 	
 	public void depart(MinecartGroup g) {
+		if(a != null) {
+			a.cancel();
+		}
+		a = null;
 		if(g.currentRoute.stops.size() > 0 && g.currentRoute.stops.get(0).equals(this)) {
 			g.currentRoute.stops.remove(0);
 		}
@@ -190,31 +212,35 @@ public class SignActionPlatform extends SignAction {
 		}
 		return;
 	}
-	
 	public Boolean exit(MinecartGroup group) {
 		this.setLights(Material.PEARLESCENT_FROGLIGHT);
 		if(group.currentRoute.name.equals("DESPAWN")) {
 			group.destroy();
 		}
+		a2 = new java.util.Timer();
 		if(!group.currentRoute._line.getName().equals("#GLOBAL") && group.currentRoute.stops.size() > 0) {
 			group.announce("This is a " + group.currentRoute._line.getName() + " Line service to " + group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
 		} else {
 			group.announce(group + " - " + group.getHeadcode() + " (why are you still on this train lmao)");
 			group.eject();
+			group.destroy();
 		}
-		
 		if(!group.currentRoute.name.equals("[CACHED ROUTE]")) {
-			new java.util.Timer().schedule(
-				new java.util.TimerTask() {
-		            @Override
-		            public void run() {
-		            	if(group.currentRoute.stops.size() > 0) {
-		            		group.announce("The next station is " + group.currentRoute.stops.get(0).station.name + ".");
-		            		}
-		            	}
-		        	},
-					3000
+			TimerTask t = new java.util.TimerTask() {
+	            @Override
+	            public void run() {
+	            	if(group.currentRoute.stops.size() > 0) {
+	            		if(group.currentRoute.stops.get(0).station.closed) {
+	            			group.announce("The next station is closed.");
+	            		} else {
+	            			group.announce("The next station is " + group.currentRoute.stops.get(0).station.name + ".");
+	            		}
+	            		}
+	            	}
+	        	};
+			a2.schedule(t, 3000
 					);
+				
 		}
 		return true;
 	}
@@ -373,7 +399,11 @@ public class SignActionPlatform extends SignAction {
 	
 	@Override
 	public Double getSpeedLimit(MinecartGroup g) {
-		return 0.0;
+		if(!this.station.closed) {
+			return 0.0;
+		} else {
+			return null;
+		}
     }
 	
 	@Override

@@ -21,6 +21,7 @@ public class Station {
 	public String hosi = "";
 	public String osi = "";
 	public String station = "";
+	public Boolean closed = false;
 	public HashMap<String, String> ann = new HashMap<String, String>();
 	public Station(String code, String name) {
 		this.code = code;
@@ -68,7 +69,7 @@ public class Station {
 				a = StationAnnouncements.parseMetro(s.osi, l).replaceAll("\\]", ", ");
 				a = a + StationAnnouncements.parseRail(s.hosi, l, true, true);
 			} else {
-				a = StationAnnouncements.parseMetro(s.osi, l, true) + ", {\"text\":\" services at {STATION}.\"}]";
+				a = StationAnnouncements.parseMetro(s.osi, l, true).replaceAll(".", "") + ", {\"text\":\" services at {STATION}.\", \"color\":\"" + l.getColour() + "\"}]";
 			}
 		} else {
 			a = StationAnnouncements.parseRail(s.hosi, l, false, true);

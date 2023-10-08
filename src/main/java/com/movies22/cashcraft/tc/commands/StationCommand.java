@@ -95,6 +95,23 @@ public class StationCommand implements CommandExecutor {
 					sender.sendMessage(ChatColor.GREEN + "The new headcode letter of " + ChatColor.YELLOW + s.name + ChatColor.GREEN + " is " + ChatColor.YELLOW + args[2] + ChatColor.GREEN + ".");
 					return true;
 				}
+			} else if (args[0].equals("close") && sender.isOp()) {
+				if (args.length < 3) {
+					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE
+							+ "/station close [CODE] <close/open>");
+					return true;
+				}
+				String code = args[1];
+				Station s = TrainCarts.plugin.StationStore.getFromCode(code);
+				if(args[2].equals("close")) {
+					s.closed = true;
+					sender.sendMessage(ChatColor.GREEN + "Trains will no longer stop at " + ChatColor.YELLOW + s.name + ChatColor.GREEN + ChatColor.GREEN + ".");
+					return true;
+				} else {
+					s.closed = false;
+					sender.sendMessage(ChatColor.GREEN + "Trains will now stop at " + ChatColor.YELLOW + s.name + ChatColor.GREEN + ChatColor.GREEN + ".");
+					return true;
+				}
 			} else if (args[0].equals("remove")) {
 				if (args.length < 2) {
 					sender.sendMessage(

@@ -104,10 +104,6 @@ public class MinecartMemberStore {
 
 				Location l = e.getLocation();
 				l.subtract(0, 0.0625, 0);
-				if((l.distance(g.tail().getEntity().getLocation()) > 20.0d) && !g.virtualized) {
-					g.destroy();
-					return;
-				}
 				Location nextLoc = m.getNextLocation();
 				PathNode n = m.getNextNode();
 				Location nextNode;
@@ -148,17 +144,18 @@ public class MinecartMemberStore {
 						mm.currentSpeed = Double.MIN_VALUE;
 						mm.getEntity().setMaxSpeed(0.0);
 					});
-				} else if (nd < 20.0) {
+					g.canProceed = false;
+					return;
+				} else if(nd < 20) {
 					n.onBlock = g;
-					 if (nd2 < 20.0) {
-						 n2.onBlock = g;
-					 }
 				}
 				if(nd2 < 20 && n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) {
 					g.getMembers().forEach(mm -> {
 						mm.currentSpeed = Double.MIN_VALUE;
 						mm.getEntity().setMaxSpeed(0.0);
 					});
+					g.canProceed = false;
+					return;
 				}
 				if (nd < 10.0) {
 					if(n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
@@ -167,6 +164,7 @@ public class MinecartMemberStore {
 						m.currentSpeed = speed;
 					}
 				} 
+				g.canProceed = true;
 				
 				m._mod = 1.0;
 
@@ -248,6 +246,10 @@ public class MinecartMemberStore {
 				speed = speed*TrainCarts.plugin.getTps();
 				m.getEntity().setMaxSpeed(m._targetSpeed*m._mod);
 				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
+				if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))/* || (l.distance(g.tail(1).getEntity().getLocation()) < 1.0d))*/ && !g.virtualized) {
+					g.destroy();
+					return;
+				}
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
 					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
@@ -369,7 +371,9 @@ public class MinecartMemberStore {
 			if (this.validate(m)) {
 				Minecart e = (Minecart) m.getEntity();
 				MinecartGroup g = m.getGroup();
-
+				if(!g.canProceed) {
+					return;
+				}
 				Location l = e.getLocation();
 				l.subtract(0, 0.0625, 0);
 

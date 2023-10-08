@@ -108,6 +108,9 @@ public class TrainCarts extends PluginBase {
 				if (l.length > 6) {
 					ss.station = l[6];
 				}
+				if (l.length > 7) {
+					ss.closed = l[7].equals("TRUE");
+				}
 			}
 			scan.close();
 		} catch (FileNotFoundException e) {
@@ -408,7 +411,7 @@ public class TrainCarts extends PluginBase {
 		s = "";
 		StationStore.Stations.values().forEach(station -> {
 			s = s + "@" + station.code + "/" + station.name + "/" + station.headcode + "/"
-					+ (station.canTerminate ? "TRUE" : "FALSE") + "/" + station.osi + "/" + station.hosi + "/" + station.station;
+					+ (station.canTerminate ? "TRUE" : "FALSE") + "/" + station.osi + "/" + station.hosi + "/" + station.station + "/" + (station.closed ? "TRUE" : "FALSE");
 		});
 		a = new File(getDataFolder().getPath() + "/stations.tc2");
 		try {

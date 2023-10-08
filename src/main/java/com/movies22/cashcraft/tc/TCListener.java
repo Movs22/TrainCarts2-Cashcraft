@@ -3,7 +3,6 @@ package com.movies22.cashcraft.tc;
 import org.bukkit.Material;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,7 +18,6 @@ import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.event.PlayerDisconnectEvent;
 
 public class TCListener implements Listener {
 	TrainCarts plugin;

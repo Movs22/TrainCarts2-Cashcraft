@@ -8,7 +8,6 @@
     <packaging>jar</packaging>
 
     <name>TrainCarts2</name>
-    <url>https://github.com/bergerhealer/traincarts/</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
