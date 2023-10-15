@@ -39,6 +39,7 @@ import com.movies22.cashcraft.tc.controller.SignStore;
 import com.movies22.cashcraft.tc.controller.StationStore;
 import com.movies22.cashcraft.tc.controller.PisController;
 import com.movies22.cashcraft.tc.signactions.SignAction;
+import com.movies22.cashcraft.webserver.WebServer;
 
 public class TrainCarts extends PluginBase {
 	public static TrainCarts plugin;
@@ -68,7 +69,6 @@ public class TrainCarts extends PluginBase {
 	@Override
 	public void enable() {
 		plugin.getLogger().log(Level.INFO, "Enabling TrainCarts...");
-
 		SignAction.init();
 		lines = new MetroLines();
 		MemberStore = new MinecartMemberStore();
@@ -335,6 +335,15 @@ public class TrainCarts extends PluginBase {
 		spawnerTask.start(100L, 20L);
 		memberMove.start(100L, 1L);
 		memberLoad.start(100L, 100L);
+		new java.util.Timer().schedule( 
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+WebServer.enable();
+                    }
+                }, 
+                5000
+        );
 	}
 
 	private String s = "";
@@ -467,4 +476,6 @@ public class TrainCarts extends PluginBase {
 	public double getTps() {
 		return (TPSListener.getTPS()/20)/1;
 	}
+
 }
+
