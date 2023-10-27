@@ -2,6 +2,7 @@ package com.movies22.cashcraft.tc.PathFinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -9,6 +10,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Rail;
 
+import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
@@ -23,7 +25,11 @@ public class PathOperation implements Cloneable {
 		this.setFacing(facing);
 		locs.add(n.loc);
 		if (e == null) {
-			this.calculate(2000);
+			try {
+				this.calculate(1000);
+			} catch(StackOverflowError z) {
+				TrainCarts.plugin.getLogger().log(Level.INFO, "FAILED at " + n.getLocationStr() );
+			}
 		} else {
 			this.setEndNode(e);
 		}

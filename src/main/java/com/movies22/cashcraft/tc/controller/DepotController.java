@@ -3,7 +3,6 @@ package com.movies22.cashcraft.tc.controller;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.logging.Level;
 
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.PathFinding.PathRoute;
@@ -13,13 +12,13 @@ import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.signactions.SignActionSpawner;
 import com.movies22.cashcraft.tc.utils.Despawn;
 
-public class DepotStore {
+public class DepotController extends BaseController  {
 	public HashMap<String, Depot> depots;
 	public HashMap<String, Integer> headcodes = new HashMap<String, Integer>();
 	//CODE > VARIABLE
 
 
-	public DepotStore() {
+	public DepotController() {
 		this.depots = new HashMap<String, Depot>();
 	}
 
@@ -73,6 +72,8 @@ public class DepotStore {
 		headcodes.put(s, i);
 		return headcode;
 	}
+	
+	@Override
 	public void doFixedTick() {
 		this.depots.values().forEach(depot -> {
 			depot.routerate.values().forEach(v -> {

@@ -17,8 +17,8 @@ public class StationStore {
 	}
 
 	
-	public Station createStation(String c, String s) {
-		Station a = new Station(c, s);
+	public Station createStation(String c, String s, String s2) {
+		Station a = new Station(c, s, s2);
 		Stations.putIfAbsent(c, a);
 		return a;
 	}

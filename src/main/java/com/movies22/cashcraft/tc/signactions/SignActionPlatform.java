@@ -36,7 +36,7 @@ public class SignActionPlatform extends SignAction {
 	public long duration;
 	public Vector offset;
 	public int doors;
-	private String n;
+	public String n;
 	public List<Location> doorLocs = new ArrayList<Location>();
 	public List<Location> lightLocs = new ArrayList<Location>();
 	public boolean inverted = false;
@@ -96,6 +96,7 @@ public class SignActionPlatform extends SignAction {
 			stops = group.currentRoute.stops.size();
 			if(group.currentRoute.stops.size() <= 1) {
 				if(this.reverse) {
+					group.unVirtualize();
 					group.loadNextRoute(false, true);
 					group.reverse();
 					group.getMembers().forEach(m -> {
@@ -139,7 +140,9 @@ public class SignActionPlatform extends SignAction {
 			pis.delay = 0;
 			pis = null;
 		n = group.currentRoute.name;
-		this.setLights(Material.VERDANT_FROGLIGHT);
+		if(!group.virtualized) {
+			this.setLights(Material.VERDANT_FROGLIGHT);
+		}
 		List<String> ann = new ArrayList<String>();
 		String c = group.getLine().getChar();
 		ann.add("This station is " + this.station.name + ".");
@@ -158,7 +161,7 @@ public class SignActionPlatform extends SignAction {
 		}
 		group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
 		ann.remove(0);
-		if(!group.isEmpty) {
+		if(!group.virtualized) { 
 		groupAnnounceTask = new Timer();
 		groupAnnounceTask.schedule( 
 		        new java.util.TimerTask() {
@@ -204,6 +207,9 @@ public class SignActionPlatform extends SignAction {
 			a.cancel();
 		}
 		a = null;
+		if(g.currentRoute.stops == null || g.currentRoute == null) {
+			return;
+		}
 		if(g.currentRoute.stops.size() > 0 && g.currentRoute.stops.get(0).equals(this)) {
 			g.currentRoute.stops.remove(0);
 		}
@@ -213,17 +219,20 @@ public class SignActionPlatform extends SignAction {
 		return;
 	}
 	public Boolean exit(MinecartGroup group) {
-		this.setLights(Material.PEARLESCENT_FROGLIGHT);
+		if(!group.virtualized) {
+			this.setLights(Material.PEARLESCENT_FROGLIGHT);
+		}
 		if(group.currentRoute.name.equals("DESPAWN")) {
 			group.destroy();
 		}
-		a2 = new java.util.Timer();
 		if(!group.currentRoute._line.getName().equals("#GLOBAL") && group.currentRoute.stops.size() > 0) {
 			group.announce("This is a " + group.currentRoute._line.getName() + " Line service to " + group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
 		} else {
-			group.announce(group + " - " + group.getHeadcode() + " (why are you still on this train lmao)");
 			group.eject();
 			group.destroy();
+		}
+		if(group.currentRoute == null) {
+			return false;
 		}
 		if(!group.currentRoute.name.equals("[CACHED ROUTE]")) {
 			TimerTask t = new java.util.TimerTask() {
@@ -238,6 +247,7 @@ public class SignActionPlatform extends SignAction {
 	            		}
 	            	}
 	        	};
+	        	a2 = new java.util.Timer();
 			a2.schedule(t, 3000
 					);
 				
@@ -277,7 +287,6 @@ public class SignActionPlatform extends SignAction {
 		if(a.length > 6) {
 			if(a[6].equals("R")) {
 				this.reverse = true;
-				TrainCarts.plugin.getLogger().log(Level.INFO, this.station.code + "~" + this.platform + " reverses.");
 			}
 		
 		}

@@ -9,7 +9,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.checkerframework.checker.units.qual.s;
 
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.PathFinding.PathNode;
@@ -181,6 +180,10 @@ public class RouteCommand implements CommandExecutor {
 					Station station = s.getFromCode(args[i].split("~")[0]);
 					if(station == null) {
 						sender.sendMessage(ChatColor.RED + "Couldn't find the station/platform " + ChatColor.YELLOW + args[i] + ChatColor.RED + ".");
+						return true;
+					}
+					if(station.platforms.get(args[i].split("~")[1]) == null) {
+						sender.sendMessage(ChatColor.RED + "Couldn't find the platform " + ChatColor.YELLOW + args[i].split("~")[1] + ChatColor.RED + " at " + args[i] + ".");
 						return true;
 					}
 					PathNode stationN = station.platforms.get(args[i].split("~")[1]).node;
