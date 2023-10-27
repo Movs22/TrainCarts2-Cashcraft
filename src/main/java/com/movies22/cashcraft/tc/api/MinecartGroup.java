@@ -25,6 +25,7 @@ import com.movies22.cashcraft.tc.PathFinding.PathOperation;
 import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.controller.ChunkArea;
+import com.movies22.cashcraft.tc.controller.PlayerController;
 import com.movies22.cashcraft.tc.utils.Despawn;
 
 import net.md_5.bungee.api.ChatColor;
@@ -52,12 +53,12 @@ public class MinecartGroup {
 	public Boolean virtualized = false;
 	public Boolean isEmpty = true;
 	public Boolean canProceed = true;
+
 	public List<ForcedChunk> chunks = new ArrayList<ForcedChunk>();
 	public MinecartGroup(MetroLine line, String headcode, int length) {
 		this.setLine(line);
 		this.setHeadcode(headcode);
 		this._setLength(length);
-		line.addTrain(this);
 	}
 	
 	public Boolean spawn(PathNode node) {
@@ -99,6 +100,7 @@ public class MinecartGroup {
 		this.members.forEach(minecart -> {
 			minecart.spawned = true;
 		});
+		this.line.addTrain(this);
 		return true;
 	}
 	
@@ -211,7 +213,9 @@ public class MinecartGroup {
 	private LongHashSet loadChunksBuffer() {
         chunksBuffer.clear();
         for (MinecartMember mm : this.getMembers()) {
-        	chunksBuffer.add(mm.getEntity().getLocation().getChunk().getX(), mm.getEntity().getLocation().getChunk().getZ());
+        	if(mm.getEntity() != null) {
+        		chunksBuffer.add(mm.getEntity().getLocation().getChunk().getX(), mm.getEntity().getLocation().getChunk().getZ());
+        	}
         }
         return chunksBuffer;
     }
@@ -247,6 +251,7 @@ public class MinecartGroup {
 			}
 			this.isEmpty = true;
 		for (MinecartMember m : this.getMembers()) {
+			if(!m.virtualized) {
 			m.getEntity().getPassengers().forEach(r -> {
 				if (r instanceof Player) {
 					this.isEmpty = false;
@@ -257,7 +262,8 @@ public class MinecartGroup {
 					p.playSound(p, Sound.ENTITY_CREEPER_PRIMED, 1, 1);
 				}
 			});
-			TrainCarts.plugin.MemberStore.removeMember(m);;
+			TrainCarts.plugin.MemberController.removeMember(m);;
+			}
 			m.destroy();
 		}
 		if(reason != null ) {
@@ -273,6 +279,13 @@ public class MinecartGroup {
 			}
 		}
 			this.line.removeTrain(this);
+			this._dest = null;
+			this._spawn = null;
+			this.chunks.clear();
+			this.chunks = null;
+			this.currentRoute.clear();
+			this.route = null;
+			this.routes = null;
 			return true;
 		} else {
 			return false;
@@ -325,7 +338,7 @@ public class MinecartGroup {
 	public void reverse() {
 		this.nextRoute = 0;
 		this.members.forEach(m -> {
-			TrainCarts.plugin.MemberStore.removeMember(m);
+			TrainCarts.plugin.MemberController.removeMember(m);
 		});
 		List<MinecartMember> a = new ArrayList<MinecartMember>(this.members);
 		this.members.clear();
@@ -334,7 +347,9 @@ public class MinecartGroup {
 			this.members.add(a.get(i));
 		}
 		this.members.forEach(m -> {
-			TrainCarts.plugin.MemberStore.addMember(m);
+			m.setPivot(this.head());
+			m.load();
+			TrainCarts.plugin.MemberController.addMember(m);
 		});
 		if(this.head().getNextNode() != null) {
 			this.head().getNextNode().onBlock = null;
@@ -462,6 +477,9 @@ public class MinecartGroup {
 	}
 	private String c;
 	public void announce(String a, Boolean s, Boolean r) {
+		if(this.virtualized) {
+			return;
+		}
 		c = a;
 		if(r && !a.endsWith("]")) {
 				c = c + "]";
@@ -492,29 +510,59 @@ public class MinecartGroup {
 		});
 	}
 	
-	/*public void virtualize() {
+	public void virtualize() {
+		if(this.head().currentSpeed > 0.05) {
+		//disconnects the head cart from the controller, to allow the removal of the other carts without the entire train despawning
 		this.head().spawned = false;
 		this.virtualized = true;
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
+			//marks cart as removed (so its skipped by the controller) and removes it from the MemberStore's cache (so it isn't cached with the wrong UUID)
 			mm.spawned = false;
-			TrainCarts.plugin.getLogger().log(Level.INFO, "Virtualizing..." + mm.index + "/" + i );
+			TrainCarts.plugin.MemberController.removeMember(mm);
 			mm.virtualize();
 		}
+		//reconnects the head cart to the controller
 		this.head().spawned = true;
-
+		}
 	}
 	
 	public void unVirtualize() {
+		if(this.tail().getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) { 
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
 			if(mm.virtualized) {
 				Boolean b = mm.load();
 				if(!b) {
+					//Failed to load train due to insuffincient track lenght - unloads train and retries later.
+					this.members.forEach(mm2 -> {
+						mm2.spawned = false;
+						TrainCarts.plugin.MemberController.removeMember(mm2);
+						mm2.virtualize();
+					});
 					return;
 				}
 			}
 		}
 		this.virtualized = false;
-	}*/
+		this.members.forEach(mm -> {
+			mm.spawned = true;
+		});
+		}
+	}
+	
+	public void checkVirtualization() {
+		if(this.head().spawned == false) {
+			return;
+		}
+		Location l = this.head().getEntity().getLocation();
+		PlayerController p = TrainCarts.plugin.PlayerController;
+		if(p.hasToLoad(l)) {
+			if(this.virtualized == true) {
+				this.unVirtualize();
+			}
+		} else if(this.virtualized == false) {
+			this.virtualize();
+		}
+	}
 }

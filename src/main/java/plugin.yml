@@ -5,7 +5,7 @@ build: ${project.build.number}
 description: Rewrite of TrainCarts, used for automatic metro in Cashcraft.
 authors: [Movies22, bergerkiller]
 api-version: 1.13
-softdepend: [BKCommonLib]
+softdepend: [BKCommonLib, SignLink]
 classdepend: [TAB]
 
 main: com.bergerkiller.bukkit.tc.Preloader

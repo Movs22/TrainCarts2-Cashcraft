@@ -6,8 +6,10 @@ import java.util.logging.Level;
 
 import org.bukkit.Location;
 
+import com.bergerkiller.bukkit.sl.API.Variables;
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+import com.movies22.cashcraft.tc.api.Station;
 import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
@@ -30,6 +32,19 @@ public class PathRoute implements Cloneable {
 		this.nodes = s;
 		this.name = n;
 		this._line = l;
+		if(this._end.getAction() instanceof SignActionPlatform) {
+			Station e = ((SignActionPlatform) this._end.getAction()).station;
+			Variables.get((l.getChar() + ":" + e.headcode)).set(e.displayName);
+		}
+	}
+	
+	public void clear() {
+		if(this.nodes != null) {
+			this.nodes.clear();
+			this.nodes = null;
+		}
+		this.stops.clear();
+		this.stops = null;
 	}
 	
 	@Override
@@ -71,9 +86,6 @@ public class PathRoute implements Cloneable {
 			List<PathOperation> s2 = new ArrayList<PathOperation>();
 			s.forEach(a -> {
 				PathOperation z = a.clone();
-				/*if(i == 0 && s.indexOf(a) == 0) {
-						z.locs.remove(0);
-				}*/
 				s2.add(z);
 			});
 			this.route.addAll(s2);
@@ -169,9 +181,11 @@ public class PathRoute implements Cloneable {
 			i++;
 			if(lastNode != null && lastNode.equals(start)) {
 				finished = true;
-				this._line.deleteRoute(this.name);
-				TrainCarts.plugin.getLogger().log(Level.WARNING, "Route " + this.name + " looped at " + st.getLocationStr() + ">" + end.getLocationStr());
-				break;
+				if(!this.name.contains("[CA")) {
+					this._line.deleteRoute(this.name);
+					TrainCarts.plugin.getLogger().log(Level.WARNING, "Route " + this.name + " looped at " + st.getLocationStr() + ">" + end.getLocationStr());
+					break;
+				}
 			}
 			if(i > 1000) {
 				finished = true;

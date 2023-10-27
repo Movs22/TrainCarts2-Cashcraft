@@ -6,8 +6,8 @@ import java.util.List;
 
 import com.bergerkiller.bukkit.sl.API.Variables;
 
-public class PisController {
-	public HashMap<String, PIS> pis;
+public class PisController extends BaseController {
+	private HashMap<String, PIS> pis;
 	
 	public PisController() {
 		this.pis = new HashMap<String, PIS>();
@@ -28,7 +28,13 @@ public class PisController {
 		});
 	}
 	
-	public void updateTimers() {
+	
+	public void clear() {
+		this.pis.clear();
+	}
+	
+	@Override
+	public void doFixedTick() {
 		this.pis.values().forEach(pis -> {
 			pis.doStep();
 		});

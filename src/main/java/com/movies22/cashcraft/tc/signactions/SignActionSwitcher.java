@@ -28,11 +28,14 @@ public class SignActionSwitcher extends SignAction {
 		t = null;
 		BlockFace s = group.head().facing;
 		this.node.connections.forEach(con -> {
-			if(con.getEndNode() != null && con.getEndNode().equals(group.head().getNextNode(1))) {
+			if(con.getEndNode() != null && con.getEndNode().equals(group.head().getNextNode(1, true))) {
 				t = con;
 			}
 		});
 		Rail.Shape a;
+		if(t == null) {
+			group.destroy(Despawn.INVALID_HEADING);
+		}
 		if(s.getOppositeFace().equals(t.facing)) {
 			try {
 				a = Rail.Shape.valueOf(s + "_" + t.facing);

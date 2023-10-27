@@ -54,11 +54,32 @@ public class StationCommand implements CommandExecutor {
 				b.remove(0);
 				b.remove(0);
 				String name = String.join(" ", b);
-				Station s = new Station(code, name);
-				TrainCarts.plugin.StationStore.addStation(s);
+				TrainCarts.plugin.StationStore.createStation(code, name, name);
 				sender.sendMessage(ChatColor.GREEN + "Created station " + ChatColor.YELLOW + name + ChatColor.GREEN
 						+ " with the station code " + ChatColor.YELLOW + code + ChatColor.GREEN + ".");
 				return true;
+			} else if (args[0].equals("display")) {
+				if (args.length < 3) {
+					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE
+							+ "/station display [CODE] [Station Display Name]");
+					return true;
+				}
+				String code = args[1];
+				List<String> a = Arrays.asList(args);
+				ArrayList<String> b = new ArrayList<String>(a);
+				b.remove(0);
+				b.remove(0);
+				Station s = TrainCarts.plugin.StationStore.getFromCode(code);
+				String name = String.join(" ", b);
+				if(name.equals("reset")) {
+					s.displayName = s.name;
+					sender.sendMessage(ChatColor.GREEN + "Reseted the display name of " + ChatColor.YELLOW + s.name + ChatColor.GREEN + ChatColor.GREEN + ".");
+					return true;
+				} else {
+					s.displayName = name;
+					sender.sendMessage(ChatColor.GREEN + "Changed the display name of " + ChatColor.YELLOW + s.name + ChatColor.GREEN + " to " + ChatColor.YELLOW + s.displayName + ChatColor.GREEN + ".");
+					return true;
+				}
 			} else if (args[0].equals("headcode")) {
 				if (args.length < 2) {
 					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE
@@ -298,10 +319,12 @@ public class StationCommand implements CommandExecutor {
 					arguments.add("remove");
 					arguments.add("teleport");
 					arguments.add("headcode");
+					arguments.add("display");
+					arguments.add("close");
 					arguments.add("osi");
 				}
 			} else if (args.length == 2 && (args[0].equals("info")
-					|| ( (args[0].equals("remove") || args[0].equals("osi") || args[0].equals("teleport") || args[0].equals("headcode")) && sender.isOp() ) )) {
+					|| ( (args[0].equals("remove") || args[0].equals("osi") || args[0].equals("teleport") || args[0].equals("headcode") || args[0].equals("display") || args[0].equals("close")) && sender.isOp() ) )) {
 				TrainCarts.plugin.StationStore.Stations.values().forEach(s -> {
 					arguments.add(s.code);
 				});
@@ -309,6 +332,9 @@ public class StationCommand implements CommandExecutor {
 				arguments.add("metro");
 				arguments.add("heavy");
 				arguments.add("station");
+			} else if (args.length == 3 && (args[0].equals("close") && sender.isOp() )) {
+				arguments.add("close");
+				arguments.add("open");
 			} else if (args.length == 3 && sender.isOp() && (args[0].equals("teleport") || args[0].equals("info"))) {
 				Station a = TrainCarts.plugin.StationStore.getFromCode(args[1]);
 				if (a != null) {

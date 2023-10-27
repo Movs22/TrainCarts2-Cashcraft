@@ -2,6 +2,7 @@ package com.movies22.cashcraft.tc.commands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,8 +15,7 @@ import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.api.MinecartMember;
-import com.movies22.cashcraft.tc.api.Station;
-import com.movies22.cashcraft.tc.controller.MinecartMemberStore;
+import com.movies22.cashcraft.tc.controller.MinecartMemberController;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
 import net.md_5.bungee.api.ChatColor;
@@ -52,11 +52,11 @@ public class TrainCommand implements CommandExecutor {
 					sender.sendMessage(ChatColor.RED + "Line " + args[1] + " wasn't found.");
 					return true;
 				}
-				MinecartMemberStore s = TrainCarts.plugin.MemberStore;
+				MinecartMemberController s = TrainCarts.plugin.MemberController;
 				trains = 0;
 				carts = 0;
 				t = "";
-				s.MinecartHeadMembers.values().forEach(mh -> {
+				s.getHeads().forEach(mh -> {
 					if (mh.getGroup().getLine().equals(l)) {
 						trains += 1;
 						carts += mh.getGroup().getMembers().size();
@@ -68,21 +68,22 @@ public class TrainCommand implements CommandExecutor {
 						+ " carts on the " + l.getName() + " line. \n §f" + t);
 				return true;
 			} else {
-				MinecartMemberStore s = TrainCarts.plugin.MemberStore;
-				int trains = s.MinecartHeadMembers.size();
-				int carts = s.MinecartMembers.size() + trains;
+				MinecartMemberController s = TrainCarts.plugin.MemberController;
+				int trains = s.getMembers().stream().filter(m -> m.virtualized == false).collect(Collectors.toList()).size();
+				int trains2 = s.getHeads().stream().filter(m -> m.getGroup().virtualized == true).collect(Collectors.toList()).size();
+				int carts = s.getHeads().size() + trains;
 				t = "";
-				s.MinecartHeadMembers.values().forEach(mm -> {
+				s.getHeads().forEach(mm -> {
 					t = t + mm.getGroup().getHeadcode() + ", ";
 				});
 				sender.sendMessage(ChatColor.GREEN + "There are a total of " + ChatColor.YELLOW + trains
-						+ ChatColor.GREEN + " trains and " + ChatColor.YELLOW + carts + ChatColor.GREEN
+						+ ChatColor.GREEN + "§a trains §a(§e" + trains2 + "§a virtual trains) and " + ChatColor.YELLOW + carts + ChatColor.GREEN
 						+ " carts on the server. \n §f" + t);
 				return true;
 			}
 		} else if (args[0].equals("unload") && sender.isOp()) {
 			if(!(sender instanceof Player)) {
-				sender.sendMessage(ChatColor.RED + "You can't run this command! (bozo)");
+				sender.sendMessage(ChatColor.RED + "You can't run this command!");
 				return  true;
 			}
 			MinecartMember m = this.getTrain(sender);
@@ -90,11 +91,11 @@ public class TrainCommand implements CommandExecutor {
 				return true;
 			}
 			MinecartGroup g = m.getGroup();
-			//g.virtualize();
+			g.virtualize();
 			sender.sendMessage(ChatColor.YELLOW + "This train has been virtualized.");
 		} else if (args[0].equals("load") && sender.isOp()) {
 			if(!(sender instanceof Player)) {
-				sender.sendMessage(ChatColor.RED + "You can't run this command! (bozo)");
+				sender.sendMessage(ChatColor.RED + "You can't run this command!");
 				return  true;
 			}
 			MinecartMember m = this.getTrain(sender);
@@ -102,7 +103,7 @@ public class TrainCommand implements CommandExecutor {
 				return true;
 			}
 			MinecartGroup g = m.getGroup();
-			//g.unVirtualize();
+			g.unVirtualize();
 			sender.sendMessage(ChatColor.YELLOW + "This train has been un-virtualized.");
 		} else if (args[0].equals("destination")) {
 			if(!(sender instanceof Player)) {
@@ -131,6 +132,88 @@ public class TrainCommand implements CommandExecutor {
 			}
 			MinecartGroup g = m.getGroup();
 			sender.sendMessage(ChatColor.YELLOW + "This train's headcode is §a" + g.getHeadcode() + "§e.");
+			return true;
+		} else if (args[0].equals("destroy") && sender.isOp()) { 
+			MinecartMember m = null;
+			if(args.length > 1) {
+				if(args[1].startsWith("t:")) {
+					String t = args[1].split(":")[1];
+					for(MinecartMember mm : TrainCarts.plugin.MemberController.getHeads()) {
+						if(mm.getGroup().getHeadcode().equals(t)) {
+							m = mm;
+							break;
+						}
+					};
+				}
+			} else {
+				m = this.getTrain(sender);
+				if(m == null) {
+					return true;
+				}
+			}
+			
+			if(args.length > 1 && args[1].startsWith("l:")) {
+				String l = args[1].split(":")[1];
+				int i = 0;
+				for(MinecartMember h : TrainCarts.plugin.MemberController.getHeads()) {
+					if(h.getGroup().getLine().getName().equals(l)) {
+						h.getGroup().destroy();
+						i++;
+					}
+				};
+				sender.sendMessage("§cDestroyed §e" + i + "§c train" + (i < 2 ? "" : "s") + " on the §e" + l + " line.");
+				return true;
+			}
+			if(args.length > 1 && args[1].equals("all")) {
+				int i = 0;
+				for(MinecartMember h : TrainCarts.plugin.MemberController.getHeads()) {
+					h.getGroup().destroy();
+					i++;
+				};
+				sender.sendMessage("§cDestroyed §e" + i + "§c train" + (i < 2 ? "" : "s") + ".");
+				return true;
+			}
+			m.getGroup().destroy();
+			sender.sendMessage("§cDestroyed the selected train.");
+			return true;
+		} else if (args[0].equals("info")) {
+			MinecartMember m = null;
+			if(args.length > 1) {
+				 for(MinecartMember mm : TrainCarts.plugin.MemberController.getHeads()) {
+					 if(mm.getGroup().getHeadcode().equals(args[1])) {
+						 m = mm;
+						 break;
+					 }
+				 };
+			} else {
+				m = this.getTrain(sender);
+				if(m == null) {
+					return true;
+				}
+			}
+			MinecartGroup g = m.getGroup();
+			sender.sendMessage(ChatColor.YELLOW + "Cart index: §a" + g.getMembers().indexOf(m));
+			sender.sendMessage(ChatColor.YELLOW + "Train is in memberStore: " + (TrainCarts.plugin.MemberController.getFromEntity(m.getEntity()) != null ? "§aYES" : "§cNO"));
+			sender.sendMessage(ChatColor.YELLOW + "Train is virtualized: " + (g.virtualized ? "§aYES" : "§cNO"));
+			if(g.currentRoute._end.getAction() instanceof SignActionPlatform) {
+				sender.sendMessage(ChatColor.YELLOW + "This train is going to §a" + ((SignActionPlatform) g.currentRoute._end.getAction()).station.name + "§e.");
+			} else {
+				sender.sendMessage(ChatColor.YELLOW + "This train is running an §aECS Service§e.");
+			}
+			sender.sendMessage(ChatColor.YELLOW + "This train is currently running at a speed of §a" + m.currentSpeed + "§e/§a" + g.head()._targetSpeed  + "§e.");
+			st = "§a";
+			for(int i = 0; i < g.currentRoute.stops.size(); i++) {
+				SignActionPlatform s = g.currentRoute.stops.get(i);
+				st = st + s.station.name;
+				if(i == (g.currentRoute.stops.size() - 2)) {
+					st = st + "§e and §a";
+				} else if(i < (g.currentRoute.stops.size() - 2)) {
+					st = st + "§e, §a";
+				}
+			}
+			
+			sender.sendMessage(ChatColor.YELLOW + "This train will stop at §a" + st + "§e.");
+			sender.sendMessage(ChatColor.YELLOW + "This train will be next at §a" + g.head().getNextNode().getLocationStr() + "§e.");
 			return true;
 		} else if (args[0].equals("speed")) {
 			if(!(sender instanceof Player)) {
@@ -175,7 +258,7 @@ public class TrainCommand implements CommandExecutor {
 		Player p = (Player) sender;
 		if( p.getVehicle() instanceof Minecart) {
 			Minecart m = (Minecart) p.getVehicle();
-			MinecartMember m2 = TrainCarts.plugin.MemberStore.getFromEntity(m);
+			MinecartMember m2 = TrainCarts.plugin.MemberController.getFromEntity(m);
 			if(m2 == null) {
 				sender.sendMessage(ChatColor.RED + "You're riding a vanilla minecart. Please run this command only from an automated train!");
 				return null;
@@ -197,8 +280,10 @@ public class TrainCommand implements CommandExecutor {
 				arguments.add("headcode");
 				arguments.add("station");
 				arguments.add("speed");
+				arguments.add("info");
+				arguments.add("list");
 				if (sender.isOp()) {
-					arguments.add("list");
+					arguments.add("destroy");
 					arguments.add("unload");
 					arguments.add("load");
 				}
@@ -210,9 +295,25 @@ public class TrainCommand implements CommandExecutor {
 			}
 
 			if (args.length == 2 && args[0].equals("info")) {
-				TrainCarts.plugin.MemberStore.MinecartHeadMembers.values().forEach(m -> {
+				TrainCarts.plugin.MemberController.getHeads().forEach(m -> {
 					arguments.add(m.getGroup().getHeadcode());
 				});
+			}
+			
+			if (args.length == 2 && args[0].equals("destroy")) {
+				if(args[1].startsWith("t:")) {
+					TrainCarts.plugin.MemberController.getHeads().forEach(m -> {
+						arguments.add("t:" + m.getGroup().getHeadcode());
+					});
+				} else if(args[1].startsWith("l:")) {
+					TrainCarts.plugin.lines.getLines().values().forEach(l -> {
+						arguments.add("l:" + l.getName());
+					});
+			 	} else {
+			 		arguments.add("all");
+			 		arguments.add("l:");
+			 		arguments.add("t:");
+			 	}
 			}
 			arguments.forEach(arg -> {
 				if (arg.toLowerCase().startsWith(args[args.length - 1].toLowerCase())) {

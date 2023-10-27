@@ -22,11 +22,11 @@ public class TC2Command implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(args.length == 0) {
-			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + "1.19.4" + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + "2.0" + ChatColor.WHITE + ".");
+			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + "1.20.1" + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + "2.0" + ChatColor.WHITE + ".");
 			return true;
 		}
 		if(args[0].equals("about")) {
-			sender.sendMessage(ChatColor.WHITE + "===== About TrainCarts 2 =====\n - Coded by: " + ChatColor.of(Colours.PURPLE.colour) + "Movies22 \n " + ChatColor.WHITE + "- Compiled on: " + ChatColor.of(Colours.CYAN.colour) + "13/06 @19:48 \n " + ChatColor.ITALIC + "TheBOI wuz 'ere" + ChatColor.WHITE + "\n=====");
+			sender.sendMessage(ChatColor.WHITE + "===== About TrainCarts 2 =====\n - Coded by: " + ChatColor.of(Colours.PURPLE.colour) + "Movies22 \n " + ChatColor.WHITE + "- Compiled on: " + ChatColor.of(Colours.CYAN.colour) + "24/10 \n " + ChatColor.ITALIC + "Beige line wen" + ChatColor.WHITE + "\n=====");
 			return true;
 		} else if(args[0].equals("reroute") && sender.isOp()) {
 			TrainCarts.plugin.global.reroute();

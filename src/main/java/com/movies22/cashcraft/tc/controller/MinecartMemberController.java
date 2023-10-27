@@ -1,7 +1,9 @@
 
 package com.movies22.cashcraft.tc.controller;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Location;
@@ -13,28 +15,31 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.util.Vector;
 
-import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.api.MinecartMember;
-import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
-import com.movies22.cashcraft.tc.utils.Despawn;
 
-public class MinecartMemberStore {
-	public HashMap<UUID, MinecartMember> MinecartMembers;
-	public HashMap<UUID, MinecartMember> MinecartHeadMembers;
-	public MetroLine line;
-
-	public MinecartMemberStore() {
+public class MinecartMemberController extends BaseController {
+	private HashMap<UUID, MinecartMember> MinecartMembers;
+	private HashMap<UUID, MinecartMember> MinecartHeadMembers;
+	public MinecartMemberController() {
 		this.MinecartMembers = new HashMap<UUID, MinecartMember>();
 		this.MinecartHeadMembers = new HashMap<UUID, MinecartMember>();
 	}
 
 	public void addMember(MinecartMember m) {
 		this.addMember(m.getEntity().getUniqueId(), m);
+	}
+	
+	public Collection<MinecartMember> getHeads() {
+		return this.MinecartHeadMembers.values();
+	}
+	
+	public Collection<MinecartMember> getMembers() {
+		return this.MinecartMembers.values();
 	}
 
 	public void addMember(UUID e, MinecartMember m) {
@@ -46,6 +51,9 @@ public class MinecartMemberStore {
 	}
 
 	public void removeMember(MinecartMember m) {
+		if(m.getEntity() == null) {
+			return;
+		}
 		if (m.index == 0) {
 			MinecartHeadMembers.remove(m.getEntity().getUniqueId());
 		} else {
@@ -82,18 +90,20 @@ public class MinecartMemberStore {
 		if (e.isDead() || m == null || m.getGroup() == null || e == null) {
 			return false;
 		}
-		Location l2 = e.getLocation().subtract(0, 1, 0);
-		if( ( !e.getLocation().getBlock().getType().equals(Material.RAIL) && !e.getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) && (!l2.getBlock().getType().equals(Material.RAIL) && !l2.getBlock().getType().equals(Material.POWERED_RAIL))) {
+		//Location l2 = e.getLocation().subtract(0, 1, 0);
+		/*if( ( !e.getLocation().getBlock().getType().equals(Material.RAIL) && !e.getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) && (!l2.getBlock().getType().equals(Material.RAIL) && !l2.getBlock().getType().equals(Material.POWERED_RAIL))) {
 			return false;
-		}
+		}*/
 		return true;
 	}
-
+	
 	Boolean b = false;
 
+	HashMap<UUID, MinecartMember> MinecartMembersHeadB;
+	HashMap<UUID, MinecartMember> MinecartMembersB;
 	@SuppressWarnings({ "unchecked" })
+	@Override
 	public void doFixedTick() {
-		HashMap<UUID, MinecartMember> MinecartMembersHeadB;
 		MinecartMembersHeadB = (HashMap<UUID, MinecartMember>) this.MinecartHeadMembers.clone();
 		MinecartMembersHeadB.values().forEach(m -> {
 			if (!m.spawned)
@@ -132,8 +142,10 @@ public class MinecartMemberStore {
 					Double sd = l.distance(st.loc);
 					if(sd < 10 && st.onBlock != null && !st.onBlock.equals(g) && !st.onBlock.despawned) {
 						g.getMembers().forEach(mm -> {
-							mm.currentSpeed = Double.MIN_VALUE;
-							mm.getEntity().setMaxSpeed(0.0);
+							if(!mm.virtualized) {
+								mm.currentSpeed = Double.MIN_VALUE;
+								mm.getEntity().setMaxSpeed(0.0);
+							}
 						});
 					}
 				}
@@ -141,8 +153,10 @@ public class MinecartMemberStore {
 				Double nd2 = l.distance(n2.loc);
 				if(nd < 20 && n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) {
 					g.getMembers().forEach(mm -> {
-						mm.currentSpeed = Double.MIN_VALUE;
-						mm.getEntity().setMaxSpeed(0.0);
+						if(!mm.virtualized) {
+							mm.currentSpeed = Double.MIN_VALUE;
+							mm.getEntity().setMaxSpeed(0.0);
+						}
 					});
 					g.canProceed = false;
 					return;
@@ -189,7 +203,9 @@ public class MinecartMemberStore {
 									double s = b.getSpeedLimit(g);
 									g.getMembers().forEach(mm -> {
 										mm._targetSpeed = s;
-										mm.getEntity().setMaxSpeed(s*mm._mod);
+										if(!mm.virtualized) {
+											mm.getEntity().setMaxSpeed(s*mm._mod);
+										}
 										mm.currentSpeed = s;
 									});
 								}
@@ -243,12 +259,13 @@ public class MinecartMemberStore {
 					m.currentSpeed -= 0.05;
 				}
 				speed = m.currentSpeed;
-				speed = speed*TrainCarts.plugin.getTps();
 				m.getEntity().setMaxSpeed(m._targetSpeed*m._mod);
 				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
-				if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))/* || (l.distance(g.tail(1).getEntity().getLocation()) < 1.0d))*/ && !g.virtualized) {
-					g.destroy();
-					return;
+				if(!g.virtualized) {
+					if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))/* || (l.distance(g.tail(1).getEntity().getLocation()) < 1.0d))*/) {
+						g.destroy();
+						return;
+					}
 				}
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
@@ -363,7 +380,8 @@ public class MinecartMemberStore {
 			}
 		});
 		MinecartMembersHeadB.clear();
-		HashMap<UUID, MinecartMember> MinecartMembersB;
+		MinecartMembersHeadB = null;
+		
 		MinecartMembersB = (HashMap<UUID, MinecartMember>) this.MinecartMembers.clone();
 		MinecartMembersB.values().forEach(m -> {
 			if (!m.spawned)
@@ -506,5 +524,10 @@ public class MinecartMemberStore {
 			}
 		});
 		MinecartMembersB.clear();
+		MinecartMembersB = null;
+	}
+	
+	public void validate() {
+		
 	}
 }

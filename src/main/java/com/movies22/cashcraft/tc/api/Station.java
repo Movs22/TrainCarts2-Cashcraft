@@ -13,6 +13,7 @@ public class Station {
 	public HashMap<String, SignActionPlatform> platforms = new HashMap<String, SignActionPlatform>();
 	public String name;
 	public String code;
+	public String displayName;
 	public List<MinecartGroup> groups = new ArrayList<MinecartGroup>();
 	public List<MetroLine> lines = new ArrayList<MetroLine>();
 	public Boolean canTerminate = false;
@@ -23,9 +24,14 @@ public class Station {
 	public String station = "";
 	public Boolean closed = false;
 	public HashMap<String, String> ann = new HashMap<String, String>();
-	public Station(String code, String name) {
+	public Station(String code, String name, String displayName) {
 		this.code = code;
 		this.name = name;
+		if(displayName != null && displayName != "") {
+			this.displayName = displayName;
+		} else {
+			this.displayName = name;
+		}
 	}
 	
 	public void setOsi(String s) {

@@ -6,7 +6,6 @@ import java.util.HashMap;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
-import org.bukkit.block.data.Rail;
 
 import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.PathFinding.PathProvider;
@@ -78,7 +77,6 @@ public class MetroLines {
 		
 		public PathNode createNode(Location a) {
 			if(getNode(a) != null) return getNode(a);
-			Sign s = null;
 			Location b = new Location(a.getWorld(), a.getX(), a.getY(), a.getZ());
 			Block c = b.subtract(0, 2, 0).getBlock();
 			return createNode(a, c);

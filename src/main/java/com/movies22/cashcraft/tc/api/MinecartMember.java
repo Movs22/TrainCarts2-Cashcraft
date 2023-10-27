@@ -1,7 +1,6 @@
 package com.movies22.cashcraft.tc.api;
 
 import java.util.List;
-import java.util.logging.Level;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -13,10 +12,11 @@ import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.PathFinding.PathOperation;
 import com.movies22.cashcraft.tc.signactions.SignAction;
+import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 
 public class MinecartMember implements Comparable<MinecartMember> {
 	private MinecartGroup group;
-	private Minecart entity;
+	private VirtualMinecart entity;
 	public Double _mod = 1.0;
 	public Double currentSpeed = 0.0;
 	private List<PathOperation> route = null;
@@ -36,23 +36,30 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		this.facing = g._getSpawn().direction;
 		this.index = i;
 		this.spawned = false;
-		this.entity = e;
-		TrainCarts.plugin.MemberStore.addMember(e.getUniqueId(), this);
-		/*if(i == 0) {
+		if(i == 0) {
 			this.setEntity(new VirtualMinecart(e, this, 0.0d));
 		} else {
 			this.setEntity(new VirtualMinecart(e, group.head(), i*1.5d));
-		}*/
+		}
+		TrainCarts.plugin.MemberController.addMember(e.getUniqueId(), this);
 	}
 	
+	public void setPivot(MinecartMember mm) {
+		this.entity.setPivot(mm);
+	}
+	
+	public Location getLocation() {
+		return this.entity.getLocation();
+	}
 	
 	public Boolean destroy() {
 		try {
-			TrainCarts.plugin.MemberStore.removeMember(this);
-			this.getEntity().remove();
-			if(this.destination != null) {
-				this.destination.remove();
+			TrainCarts.plugin.MemberController.removeMember(this);
+			if(this.getEntity() != null) {
+				this.getEntity().remove();
 			}
+			this.route.clear();
+			this.route = null;
 			return true;
 		} catch(Error e) {
 			e.printStackTrace();
@@ -62,7 +69,9 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	
 	public Boolean eject() {
 		try {
-			this.getEntity().eject();
+			if(this.getEntity() != null) {
+				this.getEntity().eject();
+			}
 			return true;
 		} catch(Error e) {
 			e.printStackTrace();
@@ -77,9 +86,9 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		this.group = group;
 	}
 	public Minecart getEntity() {
-		return (Minecart) this.entity;
+		return (Minecart) this.entity.getEntity();
 	}
-	public void setEntity(Minecart e) {
+	public void setEntity(VirtualMinecart e) {
 		this.entity = e;
 	}
 	
@@ -122,10 +131,14 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	}
 	
 	public PathNode getNextNode() {
-		return this.getNextNode(0);
+		return this.getNextNode(0, false);
 	}
 	
 	public PathNode getNextNode(int i) {
+		return this.getNextNode(i, false);
+	}
+	
+	public PathNode getNextNode(int i, boolean b) {
 		if(this.route == null) return null;
 		if(i == 0) {
 			if(this.route.size() > 1) {
@@ -155,16 +168,28 @@ public class MinecartMember implements Comparable<MinecartMember> {
 			}
 			} else {
 				PathNode a = this.route.get(0).getEndNode();
-				return a;
+				if(a.getAction() instanceof SignActionBlocker && !b) {
+					return this.getNextNode(i + 1);
+				} else {
+					return a;
+				}
 			}
 		}
 		if(this.route.size() > i) {
 			PathNode a = this.route.get(i).getEndNode();
-			return a;
+			if(a.getAction() instanceof SignActionBlocker && !b) {
+				return this.getNextNode(i + 1);
+			} else {
+				return a;
+			}
 		} else {
 			if(this.route.size() > 0) {
 				PathNode a = this.route.get(0).getEndNode();
-				return a;
+				if(a.getAction() instanceof SignActionBlocker && !b) {
+					return this.getNextNode(i + 1);
+				} else {
+					return a;
+				}
 			} else {
 				return null;
 			}
@@ -222,20 +247,17 @@ public class MinecartMember implements Comparable<MinecartMember> {
         return (int)(this.index - m.index);
     }
 	
-	/*public Boolean virtualize() {
-		this.spawned = false;
+	public Boolean virtualize() {
+		this.virtualized = true;
 		this.getEntity().remove();
 		this.entity.setVirtualized(true);
 		return true;
 	}
 	
 	public Boolean load() {
-		Boolean b = this.entity.load();
-		if(b) {
-			this.spawned = true;
-			return true;
-		} else {
-			return false;
-		}
-	}*/
+		this.entity.load();
+		this.virtualized = false;
+		TrainCarts.plugin.MemberController.addMember(this.getEntity().getUniqueId(), this);
+		return true;
+	}
 }

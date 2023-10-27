@@ -1,15 +1,10 @@
 package com.movies22.cashcraft.tc.api;
 
-import java.util.logging.Level;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Minecart;
-
-import com.movies22.cashcraft.tc.TrainCarts;
 
 public class VirtualMinecart {
 	private Entity ent = null;
@@ -20,7 +15,6 @@ public class VirtualMinecart {
 		this.ent = e;
 		this.pivot = m;
 		this.offset = o;
-		TrainCarts.plugin.getLogger().log(Level.INFO, "Virtualized entity " + e.hashCode() + ". Pivot: " + m.index + ". Offset: " + o );
 	};
 	
 	public Location getLocation() {
@@ -68,13 +62,14 @@ public class VirtualMinecart {
 	
 	public Boolean load() {
 		Location l = this.getLocation();
-		if(l.getBlock().getType().equals(Material.POWERED_RAIL)) {
-			World w = l.getWorld();
-			Entity e = w.spawnEntity(l, EntityType.MINECART);
-			this.ent = e;
-			return true;
-		} else {
-			return false;
-		}
+		World w = l.getWorld();
+		Entity e = (Entity) w.spawnEntity(l, EntityType.MINECART);
+		this.setVirtualized(false);
+		this.ent = e;
+		return true;
+	}
+	
+	public void setPivot(MinecartMember mm) {
+		this.pivot = mm;
 	}
 }

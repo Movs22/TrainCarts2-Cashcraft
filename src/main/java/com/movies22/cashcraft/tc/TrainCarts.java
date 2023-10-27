@@ -8,18 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Level;
 
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Rail;
 import org.bukkit.command.CommandSender;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import com.bergerkiller.bukkit.common.Common;
 import com.bergerkiller.bukkit.common.PluginBase;
@@ -33,23 +29,24 @@ import com.movies22.cashcraft.tc.api.MinecartMember;
 import com.movies22.cashcraft.tc.api.SpawnerRate;
 import com.movies22.cashcraft.tc.api.Station;
 import com.movies22.cashcraft.tc.commands.CommandLoader;
-import com.movies22.cashcraft.tc.controller.DepotStore;
-import com.movies22.cashcraft.tc.controller.MinecartMemberStore;
+import com.movies22.cashcraft.tc.controller.DepotController;
+import com.movies22.cashcraft.tc.controller.MinecartMemberController;
 import com.movies22.cashcraft.tc.controller.SignStore;
 import com.movies22.cashcraft.tc.controller.StationStore;
 import com.movies22.cashcraft.tc.controller.PisController;
+import com.movies22.cashcraft.tc.controller.PlayerController;
 import com.movies22.cashcraft.tc.signactions.SignAction;
-import com.movies22.cashcraft.webserver.WebServer;
 
 public class TrainCarts extends PluginBase {
 	public static TrainCarts plugin;
 	public MetroLines lines;
 	private TCListener listener;
-	public MinecartMemberStore MemberStore;
+	public MinecartMemberController MemberController;
 	public StationStore StationStore;
-	public DepotStore DepotStore;
+	public DepotController DepotStore;
 	public SignStore SignStore;
 	public PisController PisController;
+	public PlayerController PlayerController;
 	public MetroLine global = null; 
 	@Override
 	public int getMinimumLibVersion() {
@@ -64,6 +61,7 @@ public class TrainCarts extends PluginBase {
 	public Task memberMove;
 	public Task spawnerTask;
 	public Task memberLoad;
+	public Task playerUpdateTask;
 	public Timer pisUpdateTask;
 	
 	@Override
@@ -71,11 +69,12 @@ public class TrainCarts extends PluginBase {
 		plugin.getLogger().log(Level.INFO, "Enabling TrainCarts...");
 		SignAction.init();
 		lines = new MetroLines();
-		MemberStore = new MinecartMemberStore();
+		MemberController = new MinecartMemberController();
 		StationStore = new StationStore();
-		DepotStore = new DepotStore();
+		DepotStore = new DepotController();
 		SignStore = new SignStore();
 		PisController = new PisController();
+		PlayerController = new PlayerController();
 		pisUpdateTask = new Timer();
 		Scanner scan;
 
@@ -89,27 +88,27 @@ public class TrainCarts extends PluginBase {
 			while (scan.hasNext()) {
 				s = scan.next();
 				l = s.split("/");
-				Station ss = StationStore.createStation(l[0], l[1]);
-				if (l.length > 2) {
-					if (l[2].equals("null")) {
+				Station ss = StationStore.createStation(l[0], l[1], l[2]);
+				if (l.length > 3) {
+					if (l[3].equals("null")) {
 						ss.headcode = null;
 						ss.canTerminate = false;
 					} else {
-						ss.headcode = l[2];
+						ss.headcode = l[3];
 						ss.canTerminate = true;
 					}
 				}
-				if (l.length > 4) {
-					ss.setOsi(l[4], false);
-				}
 				if (l.length > 5) {
-					ss.setOsi(l[5], true);
+					ss.setOsi(l[5], false);
 				}
 				if (l.length > 6) {
-					ss.station = l[6];
+					ss.setOsi(l[6], true);
 				}
 				if (l.length > 7) {
-					ss.closed = l[7].equals("TRUE");
+					ss.station = l[7];
+				}
+				if (l.length > 8) {
+					ss.closed = l[8].equals("TRUE");
 				}
 			}
 			scan.close();
@@ -138,7 +137,7 @@ public class TrainCarts extends PluginBase {
 			while (scan.hasNext()) {
 				s = scan.next();
 				l = s.split("/");
-				Depot ds = DepotStore.createDepot(l[0], l[1]);
+				DepotStore.createDepot(l[0], l[1]);
 			}
 			scan.close();
 		} catch (FileNotFoundException e) {
@@ -302,7 +301,7 @@ public class TrainCarts extends PluginBase {
 		        new java.util.TimerTask() {
 		            @Override
 		            public void run() {
-		            	PisController.updateTimers();
+		            	PisController.doFixedTick();
 		            }
 		        }, 
 		        1000L, 1000L
@@ -316,34 +315,34 @@ public class TrainCarts extends PluginBase {
 				PisController.updateSigns();
 			}
 		};
+		playerUpdateTask = new Task(plugin) {
+			@Override
+			public void run() {
+				PlayerController.doFixedTick();
+				MemberController.getHeads().forEach(m -> {
+					m.getGroup().checkVirtualization();
+				});
+			}
+		};
 		memberMove = new Task(plugin) {
 			@Override
 			public void run() {
-				MemberStore.doFixedTick();
+				MemberController.doFixedTick();
 			}
 		};
 		
 		memberLoad = new Task(plugin) {
 			@Override
 			public void run() {
-				MemberStore.MinecartHeadMembers.values().forEach(m -> {
+				MemberController.getHeads().forEach(m -> {
 					m.getGroup().keepLoaded(true);
 				});
 			}
 		};
-		getServer().getScheduler().scheduleSyncRepeatingTask(this, new TPSListener(), 100L, 1L);
 		spawnerTask.start(100L, 20L);
 		memberMove.start(100L, 1L);
-		memberLoad.start(100L, 100L);
-		new java.util.Timer().schedule( 
-                new java.util.TimerTask() {
-                    @Override
-                    public void run() {
-WebServer.enable();
-                    }
-                }, 
-                5000
-        );
+		memberLoad.start(100L, 20L);
+		playerUpdateTask.start(100L, 20L);
 	}
 
 	private String s = "";
@@ -353,9 +352,11 @@ WebServer.enable();
 	@Override
 	public void disable() {
 		listener = null;
-		PisController.pis.clear();
-		PisController = null;
 		pisUpdateTask.cancel();
+		PisController.clear();
+		PisController = null;
+		playerUpdateTask.stop();
+		PlayerController = null;
 		memberMove.stop();
 		memberMove = null;
 		memberLoad.stop();
@@ -363,7 +364,7 @@ WebServer.enable();
 		spawnerTask.stop();
 		spawnerTask = null;
 		s = "";
-		List<MinecartMember> z = new ArrayList<MinecartMember>(MemberStore.MinecartHeadMembers.values());
+		List<MinecartMember> z = new ArrayList<MinecartMember>(MemberController.getHeads());
 		z.forEach(m -> {
 			m.getGroup().destroy();
 		});
@@ -381,6 +382,8 @@ WebServer.enable();
 			e.printStackTrace();
 		}
 		s = "";
+		SignStore.signs.clear();
+		SignStore = null;
 		File linesFolder = new File(getDataFolder().getPath() + "/lines/");
 		if (!linesFolder.exists()) {
 			Boolean b = linesFolder.mkdirs();
@@ -417,9 +420,11 @@ WebServer.enable();
 				e.printStackTrace();
 			}
 		});
+		lines.clearLines();
+		lines = null;
 		s = "";
 		StationStore.Stations.values().forEach(station -> {
-			s = s + "@" + station.code + "/" + station.name + "/" + station.headcode + "/"
+			s = s + "@" + station.code + "/" + station.name + "/" + station.displayName + "/"  + station.headcode + "/"
 					+ (station.canTerminate ? "TRUE" : "FALSE") + "/" + station.osi + "/" + station.hosi + "/" + station.station + "/" + (station.closed ? "TRUE" : "FALSE");
 		});
 		a = new File(getDataFolder().getPath() + "/stations.tc2");
@@ -431,6 +436,8 @@ WebServer.enable();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		StationStore.Stations.clear();
+		StationStore = null;
 		d = "";
 		DepotStore.depots.values().forEach(dep -> {
 			d = d + "@" + dep.code + "/" + dep.name + "/";
@@ -450,11 +457,10 @@ WebServer.enable();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		lines.clearLines();
-		MemberStore = null;
-		StationStore = null;
+		MemberController = null;
+		DepotStore.depots.clear();
+		DepotStore.headcodes.clear();
 		DepotStore = null;
-		SignStore = null;
 
 	}
 
@@ -472,10 +478,5 @@ WebServer.enable();
 		 */
 		TrainCarts getTrainCarts();
 	}
-	
-	public double getTps() {
-		return (TPSListener.getTPS()/20)/1;
-	}
-
 }
 

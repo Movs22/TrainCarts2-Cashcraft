@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,15 +13,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.Depot;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
-import com.movies22.cashcraft.tc.controller.DepotStore;
-import com.movies22.cashcraft.tc.controller.StationStore;
+import com.movies22.cashcraft.tc.controller.DepotController;
 import com.movies22.cashcraft.tc.api.SpawnerRate;
-import com.movies22.cashcraft.tc.api.Station;
-import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -44,6 +39,7 @@ public class DepotCommand implements CommandExecutor {
 	
 	private TextComponent[] msg = {};
 	private int i = 0;
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(sender.isOp()) {
@@ -169,8 +165,10 @@ public class DepotCommand implements CommandExecutor {
 				List<Integer> b = new ArrayList<Integer>();
 				d.routerate.values().forEach(c -> {
 					long n = LocalDateTime.now().atZone(ZoneId.of("Europe/Paris")).toInstant().toEpochMilli() - 60*60*1000;
-					int z = (int) c.getNextSpawnTime()._timestamp;
-					b.add((z - (int) n)/1000);
+					if(c.getNextSpawnTime() != null) {
+						int z = (int) c.getNextSpawnTime()._timestamp;
+						b.add((z - (int) n)/1000);
+					}
 				});
 				Collections.sort(b);
 				msg = java.util.Arrays.copyOf(msg, 0);
@@ -228,7 +226,7 @@ public class DepotCommand implements CommandExecutor {
 				return true;
 			} else if (args[0].equals("list")) {
 				msg = java.util.Arrays.copyOf(msg, 0);
-				DepotStore ds = TrainCarts.plugin.DepotStore;
+				DepotController ds = TrainCarts.plugin.DepotStore;
 				TextComponent m1 = new TextComponent(ChatColor.YELLOW + "There's a total of ");
 				msg = append(msg, m1);
 				TextComponent m2 = new TextComponent(ChatColor.GREEN + "" + ds.depots.values().size());

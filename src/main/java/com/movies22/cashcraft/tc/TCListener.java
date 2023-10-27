@@ -37,7 +37,7 @@ public class TCListener implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST)
     public void onVehicleDamage(VehicleDamageEvent event) {
         Entity e = (Entity) event.getVehicle();
-        if(TrainCarts.plugin.MemberStore.getFromEntity(e) != null) {
+        if(TrainCarts.plugin.MemberController.getFromEntity(e) != null) {
         	event.setCancelled(true);
         }
     }
@@ -50,7 +50,7 @@ public class TCListener implements Listener {
 		if(e == null) {
 			return;
 		}
-        if(TrainCarts.plugin.MemberStore.getFromEntity(e) != null) {
+        if(TrainCarts.plugin.MemberController.getFromEntity(e) != null) {
         	e.eject();
         	return;
         }
@@ -64,7 +64,8 @@ public class TCListener implements Listener {
 	
     //Sign right click (Convert to node if TC)
     private TextComponent[] msg = {};
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @SuppressWarnings("deprecation")
+	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent e) {
     	Player p = (Player) e.getPlayer();
         if(e.getClickedBlock().getState() instanceof Sign){

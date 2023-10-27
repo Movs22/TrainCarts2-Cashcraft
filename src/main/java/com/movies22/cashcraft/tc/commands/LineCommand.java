@@ -154,7 +154,6 @@ public class LineCommand implements CommandExecutor {
 						+ "/line info [CName]");
 				return true;
 			}
-			String c = args[1];
 			List<String> a = Arrays.asList(args);
 			ArrayList<String> b = new ArrayList<String>(a);
 			b.remove(0);
@@ -171,6 +170,8 @@ public class LineCommand implements CommandExecutor {
 			msg = append(msg, name);
 			TextComponent colour = new TextComponent(ChatColor.YELLOW + " - Line colour: " + ChatColor.GREEN + l.getColour() + "\n");
 			msg = append(msg, colour);
+			TextComponent character = new TextComponent(ChatColor.YELLOW + " - Line character: " + ChatColor.GREEN + l.getChar() + "\n");
+			msg = append(msg, character);
 			TextComponent nodes1 = new TextComponent(ChatColor.YELLOW + " - Nodes: " + ChatColor.GREEN + l.getNodes().size() + "\n");
 			msg = append(msg, nodes1);
 			Collection<PathNode> nodes = l.getNodes().values();
@@ -190,7 +191,7 @@ public class LineCommand implements CommandExecutor {
 				if(plat.station == null) {
 					clickable = new TextComponent(ChatColor.GREEN + "" + ChatColor.ITALIC + "[UNKNOWN]");
 				} else {
-					clickable = new TextComponent(ChatColor.GREEN + "" + ChatColor.ITALIC + plat.station.name + "~" + plat.platform);
+					clickable = new TextComponent(ChatColor.GREEN + "" + ChatColor.ITALIC + plat.station.code + "~" + plat.platform);
 				}
 				clickable.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover));
 				msg = append(msg, clickable);
@@ -200,14 +201,10 @@ public class LineCommand implements CommandExecutor {
 			if(l.getTrains().size() < 1) {
 				msg = append(msg, new TextComponent(ChatColor.ITALIC + "None"));
 			} else {
-				i = 0;
 				l.getTrains().forEach(train -> {
-					if (i > 0 && i < (l.getTrains().size())) {
-						msg = append(msg, m4);
-					}
-					i++;
+					msg = append(msg, m4);
 					TextComponent clickable = new TextComponent(ChatColor.GREEN + "" + ChatColor.ITALIC + train.getHeadcode());
-					clickable.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/say " + train.getHeadcode()));
+					clickable.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/train info " + train.getHeadcode()));
 					msg = append(msg, clickable);
 				});
 			}
@@ -222,7 +219,7 @@ public class LineCommand implements CommandExecutor {
 						msg = append(msg, m4);
 					}
 					i++;
-					TextComponent clickable = new TextComponent(ChatColor.GREEN + "" + ChatColor.ITALIC + route.stops.get(0).station.name + " (" + route.stops.get(0).platform + ")"+ " > " + route.stops.get(route.stops.size() - 1).station.name + " (" + route.stops.get(route.stops.size() - 1).platform + ")");
+					TextComponent clickable = new TextComponent(ChatColor.GREEN + "" + ChatColor.ITALIC + route.stops.get(0).station.code + " (" + route.stops.get(0).platform + ")"+ " > " + route.stops.get(route.stops.size() - 1).station.code + " (" + route.stops.get(route.stops.size() - 1).platform + ")");
 					clickable.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/route info " + route._line.getName() + " " + route.name));
 					TextComponent hover[] = { new TextComponent("Name: " + route.name) };
 					clickable.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, hover));
