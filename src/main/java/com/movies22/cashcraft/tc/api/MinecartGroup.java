@@ -348,6 +348,7 @@ public class MinecartGroup {
 		}
 		this.members.forEach(m -> {
 			m.setPivot(this.head());
+			m.load();
 			TrainCarts.plugin.MemberController.addMember(m);
 		});
 		if(this.head().getNextNode() != null) {

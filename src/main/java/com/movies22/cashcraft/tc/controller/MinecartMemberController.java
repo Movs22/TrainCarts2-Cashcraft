@@ -25,7 +25,6 @@ import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
 public class MinecartMemberController extends BaseController {
 	private HashMap<UUID, MinecartMember> MinecartMembers;
 	private HashMap<UUID, MinecartMember> MinecartHeadMembers;
-	private List<UUID> markedForRemoval;
 	public MinecartMemberController() {
 		this.MinecartMembers = new HashMap<UUID, MinecartMember>();
 		this.MinecartHeadMembers = new HashMap<UUID, MinecartMember>();
