@@ -248,16 +248,20 @@ public class MinecartMember implements Comparable<MinecartMember> {
     }
 	
 	public Boolean virtualize() {
+		if(!this.virtualized) {
 		this.virtualized = true;
 		this.getEntity().remove();
 		this.entity.setVirtualized(true);
+		}
 		return true;
 	}
 	
 	public Boolean load() {
+		if(this.virtualized) {
 		this.entity.load();
 		this.virtualized = false;
 		TrainCarts.plugin.MemberController.addMember(this.getEntity().getUniqueId(), this);
+		}
 		return true;
 	}
 }

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -23,12 +24,11 @@ import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
 
 public class MinecartMemberController extends BaseController {
-	private HashMap<UUID, MinecartMember> MinecartMembers;
-	private HashMap<UUID, MinecartMember> MinecartHeadMembers;
-	private List<UUID> markedForRemoval;
+	private ConcurrentHashMap<UUID, MinecartMember> MinecartMembers;
+	private ConcurrentHashMap<UUID, MinecartMember> MinecartHeadMembers;
 	public MinecartMemberController() {
-		this.MinecartMembers = new HashMap<UUID, MinecartMember>();
-		this.MinecartHeadMembers = new HashMap<UUID, MinecartMember>();
+		this.MinecartMembers = new ConcurrentHashMap<UUID, MinecartMember>();
+		this.MinecartHeadMembers = new ConcurrentHashMap<UUID, MinecartMember>();
 	}
 
 	public void addMember(MinecartMember m) {
@@ -100,13 +100,10 @@ public class MinecartMemberController extends BaseController {
 	
 	Boolean b = false;
 
-	HashMap<UUID, MinecartMember> MinecartMembersHeadB;
-	HashMap<UUID, MinecartMember> MinecartMembersB;
 	@SuppressWarnings({ "unchecked" })
 	@Override
 	public void doFixedTick() {
-		MinecartMembersHeadB = (HashMap<UUID, MinecartMember>) this.MinecartHeadMembers.clone();
-		MinecartMembersHeadB.values().forEach(m -> {
+		this.MinecartHeadMembers.values().forEach(m -> {
 			if (!m.spawned)
 				return;
 			if (this.validate(m)) {
@@ -380,11 +377,8 @@ public class MinecartMemberController extends BaseController {
 				m.getGroup().destroy();
 			}
 		});
-		MinecartMembersHeadB.clear();
-		MinecartMembersHeadB = null;
 		
-		MinecartMembersB = (HashMap<UUID, MinecartMember>) this.MinecartMembers.clone();
-		MinecartMembersB.values().forEach(m -> {
+		this.MinecartMembers.values().forEach(m -> {
 			if (!m.spawned)
 				return;
 			if (this.validate(m)) {
@@ -524,8 +518,6 @@ public class MinecartMemberController extends BaseController {
 				m.getGroup().destroy();
 			}
 		});
-		MinecartMembersB.clear();
-		MinecartMembersB = null;
 	}
 	
 	public void validate() {

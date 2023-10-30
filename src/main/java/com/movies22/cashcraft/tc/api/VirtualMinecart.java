@@ -22,25 +22,7 @@ public class VirtualMinecart {
 			return ent.getLocation();
 		} else {
 			Entity e = pivot.getEntity();
-			Location l;
-			Location l2 = e.getLocation().clone();
-			switch(pivot.facing) {
-				case NORTH:
-					l = l2.add(0, 0, -this.offset);
-					break;
-				case EAST:
-					l = l2.add(-this.offset, 0, 0);
-					break;
-				case SOUTH:
-					l = l2.add(0, 0, this.offset);
-					break;
-				case WEST:
-					l =l2.add(this.offset, 0, 0);
-					break;
-				default:
-					l = l2;
-					break;
-			};
+			Location l = e.getLocation().clone();
 			return l;
 		}
 	}
@@ -61,11 +43,13 @@ public class VirtualMinecart {
 	}
 	
 	public Boolean load() {
-		Location l = this.getLocation();
-		World w = l.getWorld();
-		Entity e = (Entity) w.spawnEntity(l, EntityType.MINECART);
-		this.setVirtualized(false);
-		this.ent = e;
+		if(this.virtualized) {
+			Location l = this.getLocation();
+			World w = l.getWorld();
+			Entity e = (Entity) w.spawnEntity(l, EntityType.MINECART);
+			this.setVirtualized(false);
+			this.ent = e;
+		}
 		return true;
 	}
 	
