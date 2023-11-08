@@ -72,7 +72,7 @@ public class Station {
 		String a = "";
 		if(!s.osi.equals("")) {
 			if(!s.hosi.equals("")) {
-				a = StationAnnouncements.parseMetro(s.osi, l).replaceAll("\\]", ", ");
+				a = StationAnnouncements.parseMetro(s.osi, l, true).replaceAll("\\]", ", ");
 				a = a + StationAnnouncements.parseRail(s.hosi, l, true, true);
 			} else {
 				a = StationAnnouncements.parseMetro(s.osi, l, true).replaceAll(".", "") + ", {\"text\":\" services at {STATION}.\", \"color\":\"" + l.getColour() + "\"}]";

@@ -340,8 +340,8 @@ public class TrainCarts extends PluginBase {
 			}
 		};
 		spawnerTask.start(100L, 20L);
-		memberMove.start(100L, 1L);
-		memberLoad.start(100L, 20L);
+		memberMove.start(100L, 2L);
+		memberLoad.start(100L, 100L);
 		playerUpdateTask.start(100L, 20L);
 	}
 

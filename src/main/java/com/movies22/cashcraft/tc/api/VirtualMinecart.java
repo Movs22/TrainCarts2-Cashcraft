@@ -1,3 +1,4 @@
+
 package com.movies22.cashcraft.tc.api;
 
 
@@ -18,17 +19,45 @@ public class VirtualMinecart {
 	};
 	
 	public Location getLocation() {
+		return this.getLocation(false);
+	}
+	
+	public Location getLocation(Boolean b) {
 		if(!virtualized) {
 			return ent.getLocation();
 		} else {
 			Entity e = pivot.getEntity();
+			if(b) {
+				return e.getLocation();
+			}
 			Location l = e.getLocation().clone();
+			switch(this.pivot.facing) {
+				case EAST:
+					l.add(this.offset, 0, 0);
+					break;
+				case NORTH:
+					l.subtract(0, 0, this.offset);
+					break;
+				case SOUTH:
+					l.add(0, 0, this.offset);
+					break;
+				case WEST:
+					l.subtract(this.offset, 0, 0);
+					break;
+				default:
+					break;
+				
+			}
 			return l;
 		}
 	}
 	
 	public void setVirtualized(Boolean b) {
 		this.virtualized = b;
+	}
+	
+	public void setOffset(Double o) {
+		this.offset = o;
 	}
 	
 	public Boolean getVirtualized() {
@@ -43,8 +72,12 @@ public class VirtualMinecart {
 	}
 	
 	public Boolean load() {
+		return this.load(false);
+	}
+	
+	public Boolean load(Boolean b) {
 		if(this.virtualized) {
-			Location l = this.getLocation();
+			Location l = this.getLocation(!b);
 			World w = l.getWorld();
 			Entity e = (Entity) w.spawnEntity(l, EntityType.MINECART);
 			this.setVirtualized(false);

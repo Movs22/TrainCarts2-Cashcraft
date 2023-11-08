@@ -348,6 +348,7 @@ public class MinecartGroup {
 		}
 		this.members.forEach(m -> {
 			m.setPivot(this.head());
+			m.setOffset(m.index*1.5d);
 			TrainCarts.plugin.MemberController.addMember(m);
 		});
 		if(this.head().getNextNode() != null) {
@@ -357,6 +358,7 @@ public class MinecartGroup {
 			}
 		}
 		this.head().lastAction = this.tail().lastAction;
+		this.head().lastAction.executed.remove(this);
 		this.tail().lastAction = null;
 		
 		}
@@ -517,6 +519,7 @@ public class MinecartGroup {
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
 			//marks cart as removed (so its skipped by the controller) and removes it from the MemberStore's cache (so it isn't cached with the wrong UUID)
+			// SKIPS head cart (i=0)
 			mm.spawned = false;
 			TrainCarts.plugin.MemberController.removeMember(mm);
 			mm.virtualize();
@@ -527,27 +530,20 @@ public class MinecartGroup {
 	}
 	
 	public void unVirtualize() {
-		if(this.tail().getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) { 
+		this.unVirtualize(false);
+	}
+	
+	public void unVirtualize(Boolean b) {
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
 			if(mm.virtualized) {
-				Boolean b = mm.load();
-				if(!b) {
-					//Failed to load train due to insuffincient track lenght - unloads train and retries later.
-					this.members.forEach(mm2 -> {
-						mm2.spawned = false;
-						TrainCarts.plugin.MemberController.removeMember(mm2);
-						mm2.virtualize();
-					});
-					return;
-				}
+				mm.load(b);
 			}
 		}
 		this.virtualized = false;
 		this.members.forEach(mm -> {
 			mm.spawned = true;
 		});
-		}
 	}
 	
 	public void checkVirtualization() {

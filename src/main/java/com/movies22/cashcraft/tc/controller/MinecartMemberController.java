@@ -87,6 +87,9 @@ public class MinecartMemberController extends BaseController {
 	}
 
 	public Boolean validate(MinecartMember m) {
+		if(m.virtualized) {
+			return true;
+		}
 		Entity e = (Entity) m.getEntity();
 		if (e.isDead() || m == null || m.getGroup() == null || e == null) {
 			return false;
@@ -135,6 +138,9 @@ public class MinecartMemberController extends BaseController {
 					m.lastAction.node.onBlock = null;
 					m.lastAction = null;
 				}
+				if(g.currentRoute.stops == null) {
+					return;
+				}
 				if(g.currentRoute.stops.size() > 0) {
 					PathNode st = g.currentRoute.stops.get(0).node;
 					Double sd = l.distance(st.loc);
@@ -147,8 +153,6 @@ public class MinecartMemberController extends BaseController {
 						});
 					}
 				}
-				PathNode n2 = m.getNextNode(1);
-				Double nd2 = l.distance(n2.loc);
 				if(nd < 20 && n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) {
 					g.getMembers().forEach(mm -> {
 						if(!mm.virtualized) {
@@ -158,16 +162,8 @@ public class MinecartMemberController extends BaseController {
 					});
 					g.canProceed = false;
 					return;
-				} else if(nd < 20) {
+				} else if(nd < 20 && !g.getHeadcode().startsWith("0")) {
 					n.onBlock = g;
-				}
-				if(nd2 < 20 && n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) {
-					g.getMembers().forEach(mm -> {
-						mm.currentSpeed = Double.MIN_VALUE;
-						mm.getEntity().setMaxSpeed(0.0);
-					});
-					g.canProceed = false;
-					return;
 				}
 				if (nd < 10.0) {
 					if(n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
@@ -195,7 +191,7 @@ public class MinecartMemberController extends BaseController {
 					while (i < 5 && (ld < (2.0) || nd < (1.0 + m._targetSpeed))) {
 						if (nd < (2.0)) {
 							SignAction b = n.getAction();
-							if (!b.executed.contains(g) && (!b.getClass().equals(SignActionBlocker.class) || !b.getClass().equals(SignActionRBlocker.class))) {
+							if (!b.executed.contains(g) && !b.getClass().equals(SignActionBlocker.class) && !b.getClass().equals(SignActionRBlocker.class)) {
 								b.ExitExecuted.remove(g);
 								if (b.getSpeedLimit(g) != null) {
 									double s = b.getSpeedLimit(g);
@@ -442,48 +438,83 @@ public class MinecartMemberController extends BaseController {
 						g.lastCurve = rail.getLocation();
 					}
 					switch(rail2.getShape()) {
-						case EAST_WEST:
-							x = nextLoc.getX() - l.getX();
-							z = 0.0;
-							break;
-						case NORTH_SOUTH:
-							x = 0.0;
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case SOUTH_EAST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case SOUTH_WEST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case NORTH_WEST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case NORTH_EAST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case ASCENDING_NORTH: 
-							x = 0.0;
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case ASCENDING_SOUTH: 
-							x = 0.0;
-							z = nextLoc.getZ() - l.getZ();
-							break;
-						case ASCENDING_EAST: 
-							x = nextLoc.getX() - l.getX();
-							z = 0.0;
-							break;
-						case ASCENDING_WEST: 
-							x = nextLoc.getX() - l.getX();
-							z = 0.0;
-							break;
-						default:
-							break;
+					case EAST_WEST:
+						x = nextLoc.getX() - l.getX();
+						if(x > 0) {
+							m.facing = BlockFace.EAST;
+						} else {
+							m.facing = BlockFace.WEST;
+						}
+						z = 0.0;
+						break;
+					case NORTH_SOUTH:
+						x = 0.0;
+						z = nextLoc.getZ() - l.getZ();
+						if(z > 0) {
+							m.facing = BlockFace.SOUTH;
+						} else {
+							m.facing = BlockFace.NORTH;
+						}
+						break;
+					case SOUTH_EAST:
+						x = nextLoc.getX() - l.getX();
+						z = nextLoc.getZ() - l.getZ();
+						if(z > 0) {
+							m.facing = BlockFace.SOUTH;
+						} else {
+							m.facing = BlockFace.EAST;
+						}
+						break;
+					case SOUTH_WEST:
+						x = nextLoc.getX() - l.getX();
+						z = nextLoc.getZ() - l.getZ();
+						if(z > 0) {
+							m.facing = BlockFace.SOUTH;
+						} else {
+							m.facing = BlockFace.WEST;
+						}
+						break;
+					case NORTH_WEST:
+						x = nextLoc.getX() - l.getX();
+						z = nextLoc.getZ() - l.getZ();
+						if(z < 0) {
+							m.facing = BlockFace.NORTH;
+						} else {
+							m.facing = BlockFace.WEST;
+						}
+						break;
+					case NORTH_EAST:
+						x = nextLoc.getX() - l.getX();
+						z = nextLoc.getZ() - l.getZ();
+						if(z < 0) {
+							m.facing = BlockFace.NORTH;
+						} else {
+							m.facing = BlockFace.EAST;
+						}
+
+						break;
+					case ASCENDING_NORTH: 
+						x = 0.0;
+						z = nextLoc.getZ() - l.getZ();
+						m.facing = BlockFace.NORTH;
+						break;
+					case ASCENDING_SOUTH: 
+						x = 0.0;
+						z = nextLoc.getZ() - l.getZ();
+						m.facing = BlockFace.SOUTH;
+						break;
+					case ASCENDING_EAST: 
+						x = nextLoc.getX() - l.getX();
+						z = 0.0;
+						m.facing = BlockFace.EAST;
+						break;
+					case ASCENDING_WEST: 
+						x = nextLoc.getX() - l.getX();
+						z = 0.0;
+						m.facing = BlockFace.WEST;
+						break;
+					default:
+						break;
 					}
 				} 
 				Vector vel;
@@ -520,7 +551,4 @@ public class MinecartMemberController extends BaseController {
 		});
 	}
 	
-	public void validate() {
-		
-	}
 }

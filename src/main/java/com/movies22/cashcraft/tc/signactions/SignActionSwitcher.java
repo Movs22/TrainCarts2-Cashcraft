@@ -35,6 +35,7 @@ public class SignActionSwitcher extends SignAction {
 		Rail.Shape a;
 		if(t == null) {
 			group.destroy(Despawn.INVALID_HEADING);
+			return false;
 		}
 		if(s.getOppositeFace().equals(t.facing)) {
 			try {

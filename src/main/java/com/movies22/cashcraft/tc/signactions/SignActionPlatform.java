@@ -81,13 +81,8 @@ public class SignActionPlatform extends SignAction {
 	public Timer groupAnnounceTask;
 	int stops = 0;
 	
-	Timer a;
-	Timer a2;
 	public Boolean execute(MinecartGroup group) {
 		b = null;
-		if(a2 != null) {
-			a2.cancel();
-		}
 		if(this.station.closed) {
 			group.currentRoute.stops.remove(0);
 			return true;
@@ -96,7 +91,8 @@ public class SignActionPlatform extends SignAction {
 			stops = group.currentRoute.stops.size();
 			if(group.currentRoute.stops.size() <= 1) {
 				if(this.reverse) {
-					group.unVirtualize();
+					group.head().facing = this.node.direction.getOppositeFace(); 
+					group.unVirtualize(true);
 					group.loadNextRoute(false, true);
 					group.reverse();
 					group.getMembers().forEach(m -> {
@@ -120,37 +116,22 @@ public class SignActionPlatform extends SignAction {
 			}
 			long dur = this.duration;
 			pis.setArrived(true);
-			long dur2 = 0L;
-			if((pis.delay % group.nextTrain) > 0) {
-				if((pis.delay % group.nextTrain) < dur/2) {
-					dur = dur - (pis.delay % group.nextTrain);
-				
-				} else {
-					dur = dur/2;
-					dur2 = (pis.delay % group.nextTrain) - dur/2;
-				}
-			}
-			if(pis.delay < 0 && pis.delay > (-dur/2)) {
-				dur = dur + -pis.delay;
-			} else if(pis.delay < 0) {
-				dur = dur*3/2;
-				dur2 = (pis.delay % group.nextTrain) + dur/2;
-			}
-			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode).addTimer(group.nextTrain - (int) dur2);
+			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode).addTimer(group.nextTrain);
 			pis.delay = 0;
 			pis = null;
 		n = group.currentRoute.name;
 		if(!group.virtualized) {
 			this.setLights(Material.VERDANT_FROGLIGHT);
 		}
+		if(!group.virtualized) { 
 		List<String> ann = new ArrayList<String>();
 		String c = group.getLine().getChar();
 		ann.add("This station is " + this.station.name + ".");
-		if(this.station.osi != c && this.station.osi != "") {
+		if(this.station.osi != c && this.station.osi != "" && this.station.osi.length() > 1) {
 			ann.add(StationAnnouncements.parseMetro(this.station.osi, group.getLine()));
 		}
 		if(this.station.hosi != null && !this.station.hosi.equals("")) {
-			ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 1)));
+			ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 2)));
 		}
 		if(this.station.station != "") {
 			String s = this.station.generateConnection(group.getLine());
@@ -161,7 +142,6 @@ public class SignActionPlatform extends SignAction {
 		}
 		group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
 		ann.remove(0);
-		if(!group.virtualized) { 
 		groupAnnounceTask = new Timer();
 		groupAnnounceTask.schedule( 
 		        new java.util.TimerTask() {
@@ -181,8 +161,7 @@ public class SignActionPlatform extends SignAction {
 		        2500L, 2500L
 		);
 		}
-		a = new java.util.Timer();
-		a.schedule( 
+		new java.util.Timer().schedule( 
 		        new java.util.TimerTask() {
 		            @Override
 		            public void run() {
@@ -203,10 +182,6 @@ public class SignActionPlatform extends SignAction {
     }
 	
 	public void depart(MinecartGroup g) {
-		if(a != null) {
-			a.cancel();
-		}
-		a = null;
 		if(g.currentRoute.stops == null || g.currentRoute == null) {
 			return;
 		}
@@ -238,6 +213,7 @@ public class SignActionPlatform extends SignAction {
 			TimerTask t = new java.util.TimerTask() {
 	            @Override
 	            public void run() {
+	            	if(group.currentRoute.stops != null) {
 	            	if(group.currentRoute.stops.size() > 0) {
 	            		if(group.currentRoute.stops.get(0).station.closed) {
 	            			group.announce("The next station is closed.");
@@ -246,9 +222,9 @@ public class SignActionPlatform extends SignAction {
 	            		}
 	            		}
 	            	}
+	            }
 	        	};
-	        	a2 = new java.util.Timer();
-			a2.schedule(t, 3000
+	        new java.util.Timer().schedule(t, 3000
 					);
 				
 		}
