@@ -91,10 +91,6 @@ public class PathRoute implements Cloneable {
 			});
 			this.route.addAll(s2);
 		}
-		this.route.forEach(con -> {
-			this._line.addNode(con.getStartNode());
-			this._line.addNode(con.getEndNode());
-		});
 	}
 	
 	PathNode start;
@@ -104,20 +100,17 @@ public class PathRoute implements Cloneable {
 	PathOperation connection;
 	boolean finished;
 	private List<Location> checkednodes;
+	private List<Station> stations;
 	@SuppressWarnings("unused")
 	private int z = 0;
 	public List<PathOperation> calculateSection(PathNode st, PathNode en) {
 		checkednodes = new ArrayList<Location>();
+		stations = new ArrayList<Station>();
 		List<PathOperation> route = new ArrayList<PathOperation>();
 		PathNode end = en;
 		finished = false;
 		int i = 0;
 		start = st;
-		/*if(start.getAction() instanceof SignActionPlatform) {
-			if(!stops.contains((SignActionPlatform) start.getAction())) {
-				stops.add((SignActionPlatform) start.getAction());
-			}
-		}*/
 		sD = Double.MAX_VALUE;
 		oX = Double.MAX_VALUE;
 		oZ = Double.MAX_VALUE;
@@ -156,6 +149,16 @@ public class PathRoute implements Cloneable {
 						if (a < 1D) {
 							if(con.getEndNode().getAction() instanceof SignActionPlatform && !stops.contains((SignActionPlatform) con.getEndNode().getAction())) {
 								stops.add((SignActionPlatform) con.getEndNode().getAction());
+								if(start.getAction() instanceof SignActionPlatform ) {
+									Station s = ((SignActionPlatform) con.getEndNode().getAction()).station;
+									if(s.osi.length() > 1) {
+										for(Station s2 : this.stations) {
+											s2.osiNeighbours.put(this, ((SignActionPlatform) con.getEndNode().getAction()).station);
+										}
+									} else {
+										this.stations.add(s);
+									}
+								}
 							}
 							route.add(con);
 							finished = true;

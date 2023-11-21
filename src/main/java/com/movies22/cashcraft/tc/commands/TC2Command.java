@@ -26,7 +26,7 @@ public class TC2Command implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(args.length == 0) {
-			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + "1.20.1" + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + "2.0" + ChatColor.WHITE + ".");
+			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + TrainCarts.plugin.mcVersion + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + TrainCarts.plugin.version + ChatColor.WHITE + ".");
 			return true;
 		}
 		if(args[0].equals("about")) {
@@ -49,7 +49,7 @@ public class TC2Command implements CommandExecutor {
 			sender.sendMessage(ChatColor.GREEN + "Playing " + args[1] + " on ALL nodes");
 			return true;
 		} else {
-			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + "1.20.1" + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + "2.0" + ChatColor.WHITE + ".");
+			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + TrainCarts.plugin.mcVersion + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + TrainCarts.plugin.version + ChatColor.WHITE + ".");
 			return true;
 		}
 	}

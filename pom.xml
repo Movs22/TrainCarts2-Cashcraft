@@ -71,6 +71,10 @@
             <id>bungeecord-repo</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
+        <repository>
+            <id>maven-repo</id>
+            <url>https://jcenter.bintray.com</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -142,9 +146,13 @@
             <version>${project.preloaderversion}</version>
             <scope>compile</scope>
             <optional>true</optional>
+        </dependency> 
+        <dependency>
+        	<groupId>io.vacco.java-express</groupId>
+        	<artifactId>java-express</artifactId>
+        	<version>0.2.1</version>
+        	<scope>compile</scope>
         </dependency>
-
-        <!-- The full server jar is only used during test; it should not be exposed as a dependency -->
     </dependencies>
 
     <!-- Build -->
@@ -194,29 +202,18 @@
                             <pattern>com.bergerkiller.bukkit.preloader</pattern>
                             <shadedPattern>com.bergerkiller.bukkit.tc</shadedPattern>
                         </relocation>
-
-                        <!-- BKCommonLib relocations of Cloud command framework -->
+                        
+                        <!-- express (used by web server) -->
                         <relocation>
-                            <pattern>cloud.commandframework</pattern>
-                            <shadedPattern>com.bergerkiller.bukkit.common.dep.cloud</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>io.leangen.geantyref</pattern>
-                            <shadedPattern>com.bergerkiller.bukkit.common.dep.typetoken</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>me.lucko.commodore</pattern>
-                            <shadedPattern>com.bergerkiller.bukkit.common.dep.me.lucko.commodore</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>net.kyori</pattern>
-                            <shadedPattern>com.bergerkiller.bukkit.common.dep.net.kyori</shadedPattern>
+                            <pattern>io.vacco.java-express</pattern>
+                            <shadedPattern>express.Express</shadedPattern>
                         </relocation>
                     </relocations>
                     <artifactSet>
                         <includes>
                             <include>me.m56738</include>
                             <include>com.bergerkiller.bukkit.preloader</include>
+                            <include>io.vacco.java-express</include>
                         </includes>
                     </artifactSet>
                     <filters>

@@ -24,7 +24,10 @@ public class PisController extends BaseController {
 	
 	public void updateSigns() {
 		this.pis.values().forEach(pis -> {
-			Variables.get(pis.name).set(pis.variable);
+			if(!pis.lastVar.equals(pis.variable)) {
+				Variables.get(pis.name).set(pis.variable);
+				pis.lastVar = pis.variable;
+			}
 		});
 	}
 	
@@ -45,6 +48,7 @@ public class PisController extends BaseController {
 	public class PIS {
 		public String name;
 		public String variable = "--:--";
+		public String lastVar = "--:--";
 		public int delay;
 		public List<Integer> timers = new ArrayList<Integer>();
 		PIS(String n) {
@@ -55,7 +59,7 @@ public class PisController extends BaseController {
 			if(b) {
 				this.variable = "Arrived";
 				if(this.timers.size() > 0) {
-					if(this.timers.get(0) < 45) {
+					if(this.timers.get(0) < 30) {
 						this.timers.remove(0);
 					}
 				}
@@ -103,7 +107,7 @@ public class PisController extends BaseController {
 			this.delay = -this.timers.get(0);
 			if(this.timers.get(0) < 0 && !this.variable.equals("Arrived")) {
 				if(this.timers.get(0) > -31) {
-				this.variable = "Delayed";
+				this.variable = "0:05";
 				} else {
 					this.variable = "Cancelled";
 					if(this.timers.size() > 0) {
@@ -126,19 +130,21 @@ public class PisController extends BaseController {
 		}
 		
 		public String getTime(int g) {
-			if(g > 59) {
+			if(g > 45) {
 				int b = g % 60;
-				int a = (g - b) / 60;
-				if(b < 10) {
-					return a + ":0" + b;
+				int a = (g - b % 10 + 10) / 60;
+				if(b < 5) {
+					return a + ":05";
+				} else if(b < 59) {
+					return a + ":" + (b - b % 5 + 10);
 				} else {
-					return a + ":" + b;
+					return a + ":00";
 				}
 			} else {
-				if(g < 10) {
-					return "0:0" + g;
+				if(g < 5) {
+					return "0:05";
 				} else {
-					return "0:" + g;
+					return "0:" + (g - g % 5 + 10);
 				}
 			}
 		}

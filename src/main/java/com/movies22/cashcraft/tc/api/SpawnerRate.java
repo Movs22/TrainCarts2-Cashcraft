@@ -7,9 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 
-import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.utils.Date;
 import com.movies22.cashcraft.tc.utils.SpawnerRateModifier;
 import com.movies22.cashcraft.tc.utils.SpawnerRateModifier.SpawnRateMod;
@@ -63,11 +61,11 @@ public class SpawnerRate {
 				if (mod.modifier != 0.0) {
 					if (a > (n2 + 5000)) {
 						if(mod.modifier == 1.0) {
-							this.trainLength.add(Integer.parseInt(lengths[0]));
+							this.trainLength.add(Integer.parseInt(lengths[0])*2);
 						} else if(mod.modifier == 0.5) {
-							this.trainLength.add(Integer.parseInt(lengths[1]));
+							this.trainLength.add(Integer.parseInt(lengths[1])*2);
 						} else if(mod.modifier == 0.25) {
-							this.trainLength.add(Integer.parseInt(lengths[2]));
+							this.trainLength.add(Integer.parseInt(lengths[2])*2);
 						} else {
 							a = Long.MAX_VALUE;
 						}
@@ -78,7 +76,6 @@ public class SpawnerRate {
 					a = Long.MAX_VALUE;
 				}
 			}
-			TrainCarts.plugin.getLogger().log(Level.INFO, "Loaded " + this.spawnTimes.size() + " spawn times.");
 		}
 	}
 
@@ -87,6 +84,7 @@ public class SpawnerRate {
 	}
 	
 	public Date getNextSpawnTime(int z) {
+		//why is this removing 1 hour from gmt+1 when it could just be gmt+0
 		long n = LocalDateTime.now().atZone(ZoneId.of("Europe/Paris")).toInstant().toEpochMilli() - 60*60*1000;
 		Date a = null;
 		int i = 0;

@@ -2,8 +2,6 @@
 package com.movies22.cashcraft.tc.controller;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -103,7 +101,6 @@ public class MinecartMemberController extends BaseController {
 	
 	Boolean b = false;
 
-	@SuppressWarnings({ "unchecked" })
 	@Override
 	public void doFixedTick() {
 		this.MinecartHeadMembers.values().forEach(m -> {
@@ -117,6 +114,7 @@ public class MinecartMemberController extends BaseController {
 				l.subtract(0, 0.0625, 0);
 				Location nextLoc = m.getNextLocation();
 				PathNode n = m.getNextNode();
+				PathNode n2 = m.getNextNode(1);
 				Location nextNode;
 				if (n != null) {
 					nextNode = n.loc;
@@ -129,7 +127,10 @@ public class MinecartMemberController extends BaseController {
 				}
 				Double nd = l.distance(nextNode);
 				Double ld = l.distance(nextLoc);
-
+				Double nd2 = 0.0;
+				if(n2 != null) {
+					nd2 = l.distance(n2.loc);
+				}
 				if (m._targetSpeed >= 0.05 && m.lastAction != null && !m.lastAction.ExitExecuted.contains(g)
 						&& m.lastAction != n.getAction()) {
 					m.lastAction.ExitExecuted.add(g);
@@ -146,24 +147,31 @@ public class MinecartMemberController extends BaseController {
 					Double sd = l.distance(st.loc);
 					if(sd < 10 && st.onBlock != null && !st.onBlock.equals(g) && !st.onBlock.despawned) {
 						g.getMembers().forEach(mm -> {
-							if(!mm.virtualized) {
-								mm.currentSpeed = Double.MIN_VALUE;
+							mm.currentSpeed = Double.MIN_VALUE;
+							if(!mm.virtualized || mm.index == 0) {
 								mm.getEntity().setMaxSpeed(0.0);
 							}
 						});
 					}
+					g.canProceed = false;
 				}
-				if(nd < 20 && n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) {
+				if(nd < 20 && (n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) || (n2 != null && nd2 < 3 && (n2.onBlock != null && !n2.onBlock.equals(g) && !n2.onBlock.despawned))) {
 					g.getMembers().forEach(mm -> {
-						if(!mm.virtualized) {
-							mm.currentSpeed = Double.MIN_VALUE;
+						mm.currentSpeed = Double.MIN_VALUE;
+						if(!mm.virtualized || mm.index == 0) {
 							mm.getEntity().setMaxSpeed(0.0);
 						}
 					});
 					g.canProceed = false;
 					return;
-				} else if(nd < 20 && !g.getHeadcode().startsWith("0")) {
+				} else if(nd < 20 && !g.getHeadcode().startsWith("0") ) {
 					n.onBlock = g;
+					if(n2 != null && (nd2 < 3 && !g.getHeadcode().startsWith("0") )) {
+						n2.onBlock = g;
+					}
+					g.canProceed = true;
+				} else {
+					g.canProceed = true;
 				}
 				if (nd < 10.0) {
 					if(n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
@@ -172,7 +180,6 @@ public class MinecartMemberController extends BaseController {
 						m.currentSpeed = speed;
 					}
 				} 
-				g.canProceed = true;
 				
 				m._mod = 1.0;
 
@@ -264,7 +271,7 @@ public class MinecartMemberController extends BaseController {
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
 					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
-						g.head().currentSpeed = 0.4d;
+						g.head()._targetSpeed = 0.4d;
 						m.getEntity().setMaxSpeed(0.4d);
 						g.lastCurve = rail.getLocation();
 					}
@@ -403,14 +410,14 @@ public class MinecartMemberController extends BaseController {
 					m._mod = 0.0;
 				}
 				if(m.index == (g.getMembers().size()) - 1 && g.lastCurve != null) {
-					if(g.lastCurve.distance(l) > 2.0) {
+					if(g.lastCurve.distance(l) > 15.0) {
 						g.getMembers().forEach(mm -> {
 							mm.getEntity().setMaxSpeed(mm._targetSpeed*mm._mod);
 						});
 						g.lastCurve = null;
 					} else {
 						g.getMembers().forEach(mm -> {
-							mm.getEntity().setMaxSpeed(0.4);
+							mm.getEntity().setMaxSpeed(0.4d);
 						});
 					}
 				}
@@ -432,11 +439,6 @@ public class MinecartMemberController extends BaseController {
 				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
-					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
-						g.head().currentSpeed = 0.4d;
-						m.getEntity().setMaxSpeed(0.4d);
-						g.lastCurve = rail.getLocation();
-					}
 					switch(rail2.getShape()) {
 					case EAST_WEST:
 						x = nextLoc.getX() - l.getX();

@@ -121,7 +121,7 @@ public class DepotController extends BaseController  {
 							m.nextTrain = Integer.MAX_VALUE;
 						} else {
 							long y = v.getNextSpawnTime(1)._timestamp;
-							m.nextTrain = (int) ((y - z) / 1000);
+							m.nextTrain = (int) ((y - z) / 1000)*2;
 						}
 						m.spawn(lane.node);
 					}

@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bukkit.Location;
+
 import com.movies22.cashcraft.tc.TrainCarts;
+import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 import com.movies22.cashcraft.tc.utils.StationAnnouncements;
@@ -24,6 +27,8 @@ public class Station {
 	public String station = "";
 	public Boolean closed = false;
 	public HashMap<String, String> ann = new HashMap<String, String>();
+	public HashMap<PathRoute, Station> osiNeighbours = new HashMap<PathRoute, Station>();
+	public HashMap<PathRoute, SignActionPlatform> services = new HashMap<PathRoute, SignActionPlatform>();
 	public Station(String code, String name, String displayName) {
 		this.code = code;
 		this.name = name;
@@ -32,6 +37,13 @@ public class Station {
 		} else {
 			this.displayName = name;
 		}
+	}
+	
+	public Location getLocation(PathRoute r) {
+		if(this.services.get(r) != null) {
+			return null;
+		}
+		return this.services.get(r).node.loc;
 	}
 	
 	public void setOsi(String s) {

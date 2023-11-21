@@ -41,6 +41,17 @@ public class MetroLines {
 		this.lines = null;
 	}
 	
+	private MetroLine l;
+	public MetroLine getFromChar(String s) {
+		l = null;
+		this.lines.values().forEach(l2 -> {
+			if(l2.getChar().equals(s)) {
+				l = l2;
+			}
+		});
+		return l;
+	}
+	
 	public class MetroLine {
 		private String name;
 		private String colour;

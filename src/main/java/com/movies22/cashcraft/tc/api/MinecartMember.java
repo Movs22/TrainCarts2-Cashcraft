@@ -153,58 +153,31 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		if (this.route == null)
 			return null;
 		if (i == 0) {
-			if (this.route.size() > 1) {
-				if (this.route.get(0).locs.size() == 0) {
-					if (this.route.size() > 1) {
-						this.lastCon = this.route.get(i).clone();
-						this.route.remove(0);
-					}
-				}
-			}
-		} else {
-			if (this.route.size() > 1) {
-				if (this.route.get(i).locs.size() == 0) {
-					if (this.route.size() > 1) {
-						this.lastCon = this.route.get(i).clone();
-					} else {
-						this.lastCon = this.route.get(i).clone();
-						this.route.remove(0);
-						this.loadNextRoute();
-					}
-				}
-			} else {
-				PathNode a = this.route.get(0).getEndNode();
-				if ((a.getAction() instanceof SignActionBlocker || a.getAction() instanceof SignActionRBlocker) && !b) {
-					return this.getNextNode(1);
-				} else {
-					return a;
-				}
-			}
-		}
-		if (this.route.size() > i) {
-			PathNode a = this.route.get(i).getEndNode();
-			if ((a.getAction() instanceof SignActionBlocker || a.getAction() instanceof SignActionRBlocker) && !b) {
-				return this.getNextNode(i + 1);
+			PathNode a = this.route.get(0).getEndNode();
+			if (((a.getAction() instanceof SignActionBlocker) || (a.getAction() instanceof SignActionRBlocker)) && !b) {
+				return this.getNextNode(1);
 			} else {
 				return a;
 			}
 		} else {
-			if (this.route.size() > 0) {
-				PathNode a = this.route.get(0).getEndNode();
-				if ((a.getAction() instanceof SignActionBlocker || a.getAction() instanceof SignActionRBlocker) && !b) {
-					return this.getNextNode(1);
-				} else {
-					return a;
-				}
+			if(this.route.size() > i) { 
+			PathNode a = this.route.get(i).getEndNode();
+			if (((a.getAction() instanceof SignActionBlocker) || (a.getAction() instanceof SignActionRBlocker)) && !b) {
+				return this.getNextNode(i + 1);
 			} else {
-				return null;
+				return a;
 			}
+			}
+			return null;
 		}
 	}
 
 	String z;
 
 	public void proceedTo(Location l) {
+		if(this.route == null) {
+			return;
+		}
 		if (this.route.get(0).locs.size() != 0) {
 			if (this.route.get(0).locs.indexOf(l) > -1) {
 				this.lastCon = this.route.get(0).clone();
@@ -266,6 +239,9 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	}
 
 	public Boolean load() {
+		if(this._targetSpeed == 0.0) {
+			return this.load(true);
+		}
 		return this.load(false);
 	}
 
