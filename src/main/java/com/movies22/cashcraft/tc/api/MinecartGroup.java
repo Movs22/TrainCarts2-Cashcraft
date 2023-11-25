@@ -531,22 +531,6 @@ public class MinecartGroup {
 	}
 	
 	public void unVirtualize() {
-<<<<<<< Updated upstream
-		if(this.tail().getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) { 
-		for(int i = 1; i < this.members.size(); i++) {
-			MinecartMember mm = this.members.get(i);
-			if(mm.virtualized) {
-				Boolean b = mm.load();
-				if(!b) {
-					//Failed to load train due to insuffincient track lenght - unloads train and retries later.
-					this.members.forEach(mm2 -> {
-						mm2.spawned = false;
-						TrainCarts.plugin.MemberController.removeMember(mm2);
-						mm2.virtualize();
-					});
-					return;
-				}
-=======
 		this.unVirtualize(false);
 	}
 	
@@ -555,7 +539,6 @@ public class MinecartGroup {
 			MinecartMember mm = this.members.get(i);
 			if(mm.virtualized) {
 				mm.load(useOffset);
->>>>>>> Stashed changes
 			}
 		}
 		this.virtualized = false;
