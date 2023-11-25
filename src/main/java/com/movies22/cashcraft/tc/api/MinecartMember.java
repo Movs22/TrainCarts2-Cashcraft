@@ -5,6 +5,7 @@ import java.util.List;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.TextDisplay;
 
@@ -47,11 +48,19 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	public void setPivot(MinecartMember mm) {
 		this.entity.setPivot(mm);
 	}
+<<<<<<< Updated upstream
 	
 	public Location getLocation() {
 		return this.entity.getLocation();
 	}
 	
+=======
+
+	public void setOffset(Double o) {
+		this.entity.setOffset(o);
+	}
+
+>>>>>>> Stashed changes
 	public Boolean destroy() {
 		try {
 			TrainCarts.plugin.MemberController.removeMember(this);
@@ -78,7 +87,18 @@ public class MinecartMember implements Comparable<MinecartMember> {
 			return false;
 		}
 	}
+<<<<<<< Updated upstream
 	
+=======
+
+	public void setMaxSpeed(Double speed) {
+		Minecart e = this.getEntity();
+		if(e != null) {
+			e.setMaxSpeed(speed);
+		}
+	}
+
+>>>>>>> Stashed changes
 	public MinecartGroup getGroup() {
 		return group;
 	}
@@ -255,7 +275,27 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	}
 	
 	public Boolean load() {
+<<<<<<< Updated upstream
 		this.entity.load();
+=======
+		if(this._targetSpeed == 0.0) {
+			return this.load(true);
+		}
+		return this.load(false);
+	}
+
+
+	public Location getLocation() {
+		return this.getLocation(true);
+	}
+
+	public Location getLocation(Boolean offset) {
+		return this.entity.getLocation(offset);
+	}
+
+	public Boolean load(Boolean offset) {
+		this.entity.load(offset);
+>>>>>>> Stashed changes
 		this.virtualized = false;
 		TrainCarts.plugin.MemberController.addMember(this.getEntity().getUniqueId(), this);
 		return true;

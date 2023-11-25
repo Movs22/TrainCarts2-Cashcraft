@@ -126,19 +126,36 @@ public class PisController extends BaseController {
 		}
 		
 		public String getTime(int g) {
+<<<<<<< Updated upstream
 			if(g > 59) {
 				int b = g % 60;
 				int a = (g - b) / 60;
 				if(b < 10) {
 					return a + ":0" + b;
+=======
+			if(g > 54) {
+				int b = (g + 5) % 60;
+				int a = (g + 5 - b % 5) / 60;
+				if(b < 6) {
+					return a + ":05";
+				} else if(b < 60) {
+					return a + ":" + (b - b % 5);
+>>>>>>> Stashed changes
 				} else {
 					return a + ":" + b;
 				}
 			} else {
+<<<<<<< Updated upstream
 				if(g < 10) {
 					return "0:0" + g;
 				} else {
 					return "0:" + g;
+=======
+				if(g < 6) {
+					return "0:05";
+				} else {
+					return "0:" + (g + 5 - g % 5);
+>>>>>>> Stashed changes
 				}
 			}
 		}

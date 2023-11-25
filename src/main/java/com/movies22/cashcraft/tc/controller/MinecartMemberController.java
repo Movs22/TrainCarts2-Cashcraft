@@ -113,7 +113,6 @@ public class MinecartMemberController extends BaseController {
 				MinecartGroup g = m.getGroup();
 
 				Location l = e.getLocation();
-				l.subtract(0, 0.0625, 0);
 				Location nextLoc = m.getNextLocation();
 				PathNode n = m.getNextNode();
 				Location nextNode;
@@ -142,6 +141,7 @@ public class MinecartMemberController extends BaseController {
 					Double sd = l.distance(st.loc);
 					if(sd < 10 && st.onBlock != null && !st.onBlock.equals(g) && !st.onBlock.despawned) {
 						g.getMembers().forEach(mm -> {
+<<<<<<< Updated upstream
 							if(!mm.virtualized) {
 								mm.currentSpeed = Double.MIN_VALUE;
 								mm.getEntity().setMaxSpeed(0.0);
@@ -170,7 +170,29 @@ public class MinecartMemberController extends BaseController {
 					});
 					g.canProceed = false;
 					return;
+=======
+							mm.currentSpeed = Double.MIN_VALUE;
+							mm.setMaxSpeed(0.0);
+						});
+						g.canProceed = false;
+					} else if(nd < 20 && (n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned && n.onBlock.head().currentSpeed >= 0.05 && n.onBlock.canProceed) || (n2 != null && nd2 < 10 && (n2.onBlock != null && !n2.onBlock.equals(g) && !n2.onBlock.despawned && n2.onBlock.head().currentSpeed >= 0.05) && n2.onBlock.canProceed)) {
+					g.getMembers().forEach(mm -> {
+						mm.currentSpeed = Double.MIN_VALUE;
+						mm.setMaxSpeed(0.0);
+					});
+					g.canProceed = false;
+					return;
+				} else if(nd < 20 && !g.getHeadcode().startsWith("0") && m._targetSpeed >= 0.0d) {
+					n.onBlock = g;
+					if(n2 != null && (nd2 < 10 && !g.getHeadcode().startsWith("0") && m._targetSpeed >= 0.0d )) {
+						n2.onBlock = g;
+					}
+					g.canProceed = true;
+				} else {
+					g.canProceed = true;
+>>>>>>> Stashed changes
 				}
+			}
 				if (nd < 10.0) {
 					if(n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
 						speed = Math.abs(m._targetSpeed - n.getAction().getSpeedLimit(g)) * ((nd + 2.0) / 12.0)
@@ -259,10 +281,10 @@ public class MinecartMemberController extends BaseController {
 					m.currentSpeed -= 0.05;
 				}
 				speed = m.currentSpeed;
-				m.getEntity().setMaxSpeed(m._targetSpeed*m._mod);
-				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
+				m.setMaxSpeed(m._targetSpeed*m._mod);
+				Block rail = e.getLocation().getBlock();
 				if(!g.virtualized) {
-					if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))/* || (l.distance(g.tail(1).getEntity().getLocation()) < 1.0d))*/) {
+					if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))) {
 						g.destroy();
 						return;
 					}
@@ -270,9 +292,15 @@ public class MinecartMemberController extends BaseController {
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
 					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
+<<<<<<< Updated upstream
 						g.head().currentSpeed = 0.4d;
 						m.getEntity().setMaxSpeed(0.4d);
+=======
+						m.setMaxSpeed(0.4d);
+>>>>>>> Stashed changes
 						g.lastCurve = rail.getLocation();
+					} else {
+						m.setMaxSpeed(m._targetSpeed*m._mod);
 					}
 					switch(rail2.getShape()) {
 						case EAST_WEST:
@@ -393,7 +421,6 @@ public class MinecartMemberController extends BaseController {
 					return;
 				}
 				Location l = e.getLocation();
-				l.subtract(0, 0.0625, 0);
 
 				m._targetSpeed = g.head()._targetSpeed;
 				m.currentSpeed = g.head().currentSpeed;
@@ -401,7 +428,7 @@ public class MinecartMemberController extends BaseController {
 				if (nextCart == null || nextCart.getEntity() == null) {
 					return;
 				}
-				m._mod = l.distance(nextCart.getEntity().getLocation()) / 1.5;
+				m._mod = l.distance(nextCart.getLocation(true)) / 1.2;
 
 
 				if (m.currentSpeed < 0.05) {
@@ -411,18 +438,27 @@ public class MinecartMemberController extends BaseController {
 				if (m._mod < 0.0) {
 					m._mod = 0.0;
 				}
+<<<<<<< Updated upstream
 				if(m.index == (g.getMembers().size()) - 1 && g.lastCurve != null) {
 					if(g.lastCurve.distance(l) > 2.0) {
+=======
+				/*if(m.index == (g.getMembers().size()) - 1 && g.lastCurve != null) {
+					if(g.lastCurve.distance(l) > 5.0) {
+>>>>>>> Stashed changes
 						g.getMembers().forEach(mm -> {
-							mm.getEntity().setMaxSpeed(mm._targetSpeed*mm._mod);
+							mm.setMaxSpeed(mm._targetSpeed*mm._mod);
 						});
 						g.lastCurve = null;
 					} else {
 						g.getMembers().forEach(mm -> {
+<<<<<<< Updated upstream
 							mm.getEntity().setMaxSpeed(0.4);
+=======
+							mm.setMaxSpeed(0.4d);
+>>>>>>> Stashed changes
 						});
 					}
-				}
+				}*/
 				
 				// Initializes variables for the vectors.
 				Double x = 0.0;
@@ -436,15 +472,22 @@ public class MinecartMemberController extends BaseController {
 					m.currentSpeed -= 0.05;
 				}
 				speed = m.currentSpeed;
-				m.getEntity().setMaxSpeed(ts*m._mod);
-				
+				m.setMaxSpeed(ts*m._mod);
 				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
+<<<<<<< Updated upstream
 					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
 						g.head().currentSpeed = 0.4d;
 						m.getEntity().setMaxSpeed(0.4d);
 						g.lastCurve = rail.getLocation();
+=======
+					if(rail.getType().equals(Material.RAIL)/* 	|| rail2.getShape().name().contains("ASCENDING") */) {
+						m.setMaxSpeed(0.4d);
+						g.lastCurve = rail.getLocation();
+					} else {
+						m.setMaxSpeed(m._targetSpeed*m._mod);
+>>>>>>> Stashed changes
 					}
 					switch(rail2.getShape()) {
 						case EAST_WEST:
@@ -518,7 +561,7 @@ public class MinecartMemberController extends BaseController {
 					vel = vel.multiply(4);
 					vel = vel.divide(new Vector(3, 3, 3));
 				}
-				e.setVelocity(vel.multiply(m._mod * speed));
+				e.setVelocity(vel.multiply( (m._mod * speed) ));
 			} else {
 				m.getGroup().destroy();
 			}

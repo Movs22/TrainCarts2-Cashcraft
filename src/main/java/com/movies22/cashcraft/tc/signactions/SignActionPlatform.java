@@ -14,11 +14,8 @@ import org.bukkit.block.data.type.Jigsaw.Orientation;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import com.bergerkiller.bukkit.common.Task;
-import com.bergerkiller.bukkit.sl.API.Variables;
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
-import com.movies22.cashcraft.tc.api.MinecartMember;
 import com.movies22.cashcraft.tc.api.Station;
 import com.movies22.cashcraft.tc.controller.PisController;
 import com.movies22.cashcraft.tc.utils.Guides;
@@ -85,15 +82,20 @@ public class SignActionPlatform extends SignAction {
 	Timer a2;
 	public Boolean execute(MinecartGroup group) {
 		b = null;
+<<<<<<< Updated upstream
 		if(a2 != null) {
 			a2.cancel();
 		}
+=======
+		group.currentPlat = this;
+>>>>>>> Stashed changes
 		if(this.station.closed) {
 			group.currentRoute.stops.remove(0);
 			return true;
 		}
 		if(group.currentRoute.stops.size() > 0 && group.currentRoute.stops.get(0).equals(this)) {
 			stops = group.currentRoute.stops.size();
+			group.head().facing = this.node.direction;
 			if(group.currentRoute.stops.size() <= 1) {
 				if(this.reverse) {
 					group.unVirtualize();
@@ -252,6 +254,7 @@ public class SignActionPlatform extends SignAction {
 					);
 				
 		}
+		group.currentPlat = null;
 		return true;
 	}
 	

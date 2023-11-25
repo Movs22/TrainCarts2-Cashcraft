@@ -73,7 +73,7 @@ public class SpawnerRate {
 						}
 						this.spawnTimes.add(new Date(a + Math.round(offset / (mod.modifier*1000)*1000))   );
 					}
-					a += Math.round(rate / (mod.modifier*1000))*1000;
+					a += Math.round(rate / (mod.modifier*1000))*2000;
 				} else {
 					a = Long.MAX_VALUE;
 				}

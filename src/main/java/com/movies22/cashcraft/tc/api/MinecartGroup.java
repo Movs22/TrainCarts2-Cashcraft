@@ -26,6 +26,7 @@ import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.controller.ChunkArea;
 import com.movies22.cashcraft.tc.controller.PlayerController;
+import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 import com.movies22.cashcraft.tc.utils.Despawn;
 
 import net.md_5.bungee.api.ChatColor;
@@ -53,6 +54,8 @@ public class MinecartGroup {
 	public Boolean virtualized = false;
 	public Boolean isEmpty = true;
 	public Boolean canProceed = true;
+
+	public SignActionPlatform currentPlat = null;
 
 	public List<ForcedChunk> chunks = new ArrayList<ForcedChunk>();
 	public MinecartGroup(MetroLine line, String headcode, int length) {
@@ -528,6 +531,7 @@ public class MinecartGroup {
 	}
 	
 	public void unVirtualize() {
+<<<<<<< Updated upstream
 		if(this.tail().getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) { 
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
@@ -542,6 +546,16 @@ public class MinecartGroup {
 					});
 					return;
 				}
+=======
+		this.unVirtualize(false);
+	}
+	
+	public void unVirtualize(Boolean useOffset) {
+		for(int i = 1; i < this.members.size(); i++) {
+			MinecartMember mm = this.members.get(i);
+			if(mm.virtualized) {
+				mm.load(useOffset);
+>>>>>>> Stashed changes
 			}
 		}
 		this.virtualized = false;
@@ -559,7 +573,14 @@ public class MinecartGroup {
 		PlayerController p = TrainCarts.plugin.PlayerController;
 		if(p.hasToLoad(l)) {
 			if(this.virtualized == true) {
-				this.unVirtualize();
+				if(this.head()._targetSpeed == 0.0) {
+					this.unVirtualize(true);
+					if(this.currentPlat != null) {
+						this.currentPlat.setLights(Material.VERDANT_FROGLIGHT);
+					}
+				} else {
+					this.unVirtualize();
+				}
 			}
 		} else if(this.virtualized == false) {
 			this.virtualize();
