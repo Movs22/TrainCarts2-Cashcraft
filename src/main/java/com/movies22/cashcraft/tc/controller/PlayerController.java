@@ -15,7 +15,7 @@ public class PlayerController extends BaseController {
 	public Boolean hasToLoad(Location l) {
 		Boolean a = false;
 		for(Location loc : this.locs) {
-			if(l.distance(loc) < 30) {
+			if(l.distance(loc) < 32) {
 				a = true;
 				break;
 			}

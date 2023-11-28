@@ -1,5 +1,6 @@
 package com.movies22.cashcraft.tc.controller;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import com.movies22.cashcraft.tc.api.MetroLines;
@@ -43,10 +44,25 @@ public class StationStore {
 	public Station getFromName(String n) {
 		b = null;
 		Stations.values().forEach(a -> {
-			if(a.name == n) {
+			if(a.name.toLowerCase().equals(n.toLowerCase())) {
 				b = a;
 			}
 		});
 		return b;
+	}
+	
+	private String z;
+	public void postParse() {
+		Stations.values().forEach(station -> {
+			z = station.osi;
+			station.platforms.values().forEach(p -> {
+				if(!z.contains(p.node.line.getChar())) {
+					z = z + p.node.line.getChar();
+				}
+			});	
+			String z2[] = z.split("");
+			Arrays.sort(z2);
+			station.osi = String.join("", z2);
+		});
 	}
 }

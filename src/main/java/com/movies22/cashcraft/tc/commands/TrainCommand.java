@@ -1,6 +1,7 @@
 package com.movies22.cashcraft.tc.commands;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ public class TrainCommand implements CommandExecutor {
 	private int carts = 0;
 	private String t;
 	private String st;
+	List<String> a;
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if (!sender.isOp()) {
@@ -53,29 +55,41 @@ public class TrainCommand implements CommandExecutor {
 					return true;
 				}
 				MinecartMemberController s = TrainCarts.plugin.MemberController;
-				trains = 0;
-				carts = 0;
+				int trains = s.getHeads().stream().filter(m -> m.getGroup().getLine().equals(l) && m.virtualized == false).collect(Collectors.toList()).size();
+				int trains2 = s.getHeads().stream().filter(m -> m.getGroup().getLine().equals(l) &&m.getGroup().virtualized == true).collect(Collectors.toList()).size();
+				int carts = s.getMembers().stream().filter(m -> m.getGroup().getLine().equals(l) &&m.getGroup().virtualized == true).collect(Collectors.toList()).size();
+				carts = carts + trains;
 				t = "";
-				s.getHeads().forEach(mh -> {
-					if (mh.getGroup().getLine().equals(l)) {
-						trains += 1;
-						carts += mh.getGroup().getMembers().size();
-						t = t + mh.getGroup().getHeadcode() + ", ";
+				a = new ArrayList<String>();
+				s.getHeads().forEach(mm -> {
+					if(mm.getGroup().getLine().equals(l)) {
+						a.add( ChatColor.of(l.getColour()) + mm.getGroup().getHeadcode());
 					}
 				});
+				Collections.sort(a);
+				a.forEach(b -> {
+					t = t + b + ", ";
+				});
+				a.clear();
 				sender.sendMessage(ChatColor.GREEN + "There are a total of " + ChatColor.YELLOW + trains
-						+ ChatColor.GREEN + " trains and " + ChatColor.YELLOW + carts + ChatColor.GREEN
-						+ " carts on the " + l.getName() + " line. \n §f" + t);
+						+ ChatColor.GREEN + "§a trains §a(§e" + trains2 + "§a virtual trains) and " + ChatColor.YELLOW + carts + ChatColor.GREEN
+						+ " carts on the " + ChatColor.of(l.getColour()) + l.getName() + "§a line. \n §f" + t);
 				return true;
 			} else {
 				MinecartMemberController s = TrainCarts.plugin.MemberController;
-				int trains = s.getMembers().stream().filter(m -> m.virtualized == false).collect(Collectors.toList()).size();
+				int trains = s.getHeads().stream().filter(m -> m.getGroup().virtualized == false).collect(Collectors.toList()).size();
 				int trains2 = s.getHeads().stream().filter(m -> m.getGroup().virtualized == true).collect(Collectors.toList()).size();
-				int carts = s.getHeads().size() + trains;
+				int carts = s.getMembers().size();
 				t = "";
+				a = new ArrayList<String>();
 				s.getHeads().forEach(mm -> {
-					t = t + mm.getGroup().getHeadcode() + ", ";
+					a.add( ChatColor.of(mm.getGroup().getLineColour()) + mm.getGroup().getHeadcode());
 				});
+				Collections.sort(a);
+				a.forEach(b -> {
+					t = t + b + ", ";
+				});
+				a.clear();
 				sender.sendMessage(ChatColor.GREEN + "There are a total of " + ChatColor.YELLOW + trains
 						+ ChatColor.GREEN + "§a trains §a(§e" + trains2 + "§a virtual trains) and " + ChatColor.YELLOW + carts + ChatColor.GREEN
 						+ " carts on the server. \n §f" + t);
