@@ -3,10 +3,14 @@ package com.movies22.cashcraft.tc.commands;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Location;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.utils.Colours;
@@ -22,7 +26,7 @@ public class TC2Command implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		if(args.length == 0) {
-			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + "1.20.1" + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + "2.0" + ChatColor.WHITE + ".");
+			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + TrainCarts.plugin.mcVersion + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + TrainCarts.plugin.version + ChatColor.WHITE + ".");
 			return true;
 		}
 		if(args[0].equals("about")) {
@@ -32,8 +36,20 @@ public class TC2Command implements CommandExecutor {
 			TrainCarts.plugin.global.reroute();
 			sender.sendMessage(ChatColor.GREEN + "Rerouted " + TrainCarts.plugin.global.getNodes().size() + " nodes");
 			return true;
+		} else if(args[0].equals("radio") && sender.isOp() && args.length >= 2) {
+			Player p = (Player) sender;
+			Sound s = Sound.valueOf(args[1]);
+			World w = p.getLocation().getWorld();
+			TrainCarts.plugin.StationStore.Stations.values().forEach(m -> {
+				m.platforms.values().forEach(plat -> {
+					Location l = plat.node.getLocation();
+					w.playSound(l, s, 10, 1);
+				});
+			});
+			sender.sendMessage(ChatColor.GREEN + "Playing " + args[1] + " on ALL nodes");
+			return true;
 		} else {
-			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + "1.20.1" + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + "2.0" + ChatColor.WHITE + ".");
+			sender.sendMessage(ChatColor.WHITE + "Running TrainCarts 2 on version " + ChatColor.of(Colours.PURPLE.colour) + TrainCarts.plugin.mcVersion + ChatColor.WHITE + "-" + ChatColor.of(Colours.CYAN.colour) + TrainCarts.plugin.version + ChatColor.WHITE + ".");
 			return true;
 		}
 	}
@@ -48,6 +64,12 @@ public class TC2Command implements CommandExecutor {
 				arguments.add("version");
 				if (sender.isOp()) {
 					arguments.add("reroute");
+					arguments.add("radio");
+				}
+			}
+			if(args.length == 2 && args[0].equals("radio")) {
+				for(Sound s : Sound.values()) {
+					arguments.add(s.name());
 				}
 			}
 			arguments.forEach(arg -> {

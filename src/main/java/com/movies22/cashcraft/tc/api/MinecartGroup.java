@@ -50,6 +50,9 @@ public class MinecartGroup {
 	public int nextRoute = 0;
 	public PathRoute currentRoute;
 	public int nextTrain = 0;
+	
+	public Boolean recording = false;
+	
 	public Location lastCurve = null;
 	public Boolean virtualized = false;
 	public Boolean isEmpty = true;
@@ -102,6 +105,7 @@ public class MinecartGroup {
 		this.loadNextRoute(true);
 		this.members.forEach(minecart -> {
 			minecart.spawned = true;
+			minecart.proceedTo(this._spawn.loc);
 		});
 		this.line.addTrain(this);
 		return true;
@@ -131,9 +135,6 @@ public class MinecartGroup {
 		if(this.head() != null) {
 			if(this.head().getNextNode() != null) {
 				this.head().getNextNode().onBlock = null;
-				if(this.head().getNextNode(1) != null) {
-					this.head().getNextNode(1).onBlock = null;
-				}
 			}
 		}
 		PathRoute r = this.routes.get(0).clone();
@@ -177,6 +178,8 @@ public class MinecartGroup {
 			a = "7";
 		} else if(r._line.getName().equals("Cyan")) {
 			a = "8";
+		} else if(r._line.getName().equals("Grey")) {
+			a = "9";
 		} else {
 			a = "0";
 		}
@@ -277,9 +280,6 @@ public class MinecartGroup {
 		}
 		if(this.head().getNextNode() != null) {
 			this.head().getNextNode().onBlock = null;
-			if(this.head().getNextNode(1) != null) {
-				this.head().getNextNode(1).onBlock = null;
-			}
 		}
 			this.line.removeTrain(this);
 			this._dest = null;
@@ -351,16 +351,14 @@ public class MinecartGroup {
 		}
 		this.members.forEach(m -> {
 			m.setPivot(this.head());
-			m.load();
+			m.setOffset(m.index*1.5d);
 			TrainCarts.plugin.MemberController.addMember(m);
 		});
 		if(this.head().getNextNode() != null) {
 			this.head().getNextNode().onBlock = null;
-			if(this.head().getNextNode(1) != null) {
-				this.head().getNextNode(1).onBlock = null;
-			}
 		}
 		this.head().lastAction = this.tail().lastAction;
+		this.head().lastAction.executed.remove(this);
 		this.tail().lastAction = null;
 		
 		}
@@ -521,6 +519,7 @@ public class MinecartGroup {
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
 			//marks cart as removed (so its skipped by the controller) and removes it from the MemberStore's cache (so it isn't cached with the wrong UUID)
+			// SKIPS head cart (i=0)
 			mm.spawned = false;
 			TrainCarts.plugin.MemberController.removeMember(mm);
 			mm.virtualize();
@@ -534,18 +533,17 @@ public class MinecartGroup {
 		this.unVirtualize(false);
 	}
 	
-	public void unVirtualize(Boolean useOffset) {
+	public void unVirtualize(Boolean b) {
 		for(int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
 			if(mm.virtualized) {
-				mm.load(useOffset);
+				mm.load(b);
 			}
 		}
 		this.virtualized = false;
 		this.members.forEach(mm -> {
 			mm.spawned = true;
 		});
-		}
 	}
 	
 	public void checkVirtualization() {

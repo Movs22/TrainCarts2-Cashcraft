@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.bukkit.Location;
+
 import com.movies22.cashcraft.tc.TrainCarts;
+import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 import com.movies22.cashcraft.tc.utils.StationAnnouncements;
@@ -24,6 +27,8 @@ public class Station {
 	public String station = "";
 	public Boolean closed = false;
 	public HashMap<String, String> ann = new HashMap<String, String>();
+	public HashMap<PathRoute, Station> osiNeighbours = new HashMap<PathRoute, Station>();
+	public HashMap<PathRoute, SignActionPlatform> services = new HashMap<PathRoute, SignActionPlatform>();
 	public Station(String code, String name, String displayName) {
 		this.code = code;
 		this.name = name;
@@ -32,6 +37,13 @@ public class Station {
 		} else {
 			this.displayName = name;
 		}
+	}
+	
+	public Location getLocation(PathRoute r) {
+		if(this.services.get(r) != null) {
+			return null;
+		}
+		return this.services.get(r).node.loc;
 	}
 	
 	public void setOsi(String s) {
@@ -62,7 +74,7 @@ public class Station {
 		return true;
 	}
 	
-	public String generateConnection( MetroLine l) {
+	public String generateConnection(MetroLine l) {
 		if(ann.get(l.getName()) == null) {
 		if(this.station.equals("")) return null;
 		Station s = TrainCarts.plugin.StationStore.getFromCode(this.station);
@@ -72,7 +84,7 @@ public class Station {
 		String a = "";
 		if(!s.osi.equals("")) {
 			if(!s.hosi.equals("")) {
-				a = StationAnnouncements.parseMetro(s.osi, l).replaceAll("\\]", ", ");
+				a = StationAnnouncements.parseMetro(s.osi, l, true).replaceAll("\\]", ", ");
 				a = a + StationAnnouncements.parseRail(s.hosi, l, true, true);
 			} else {
 				a = StationAnnouncements.parseMetro(s.osi, l, true).replaceAll(".", "") + ", {\"text\":\" services at {STATION}.\", \"color\":\"" + l.getColour() + "\"}]";

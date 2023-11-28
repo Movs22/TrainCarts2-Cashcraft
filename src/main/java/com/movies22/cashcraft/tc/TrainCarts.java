@@ -36,6 +36,8 @@ import com.movies22.cashcraft.tc.controller.StationStore;
 import com.movies22.cashcraft.tc.controller.PisController;
 import com.movies22.cashcraft.tc.controller.PlayerController;
 import com.movies22.cashcraft.tc.signactions.SignAction;
+import com.movies22.cashcraft.tc.webserver.MainServer;
+import com.movies22.cashcraft.tc.webserver.ServerThread;
 
 public class TrainCarts extends PluginBase {
 	public static TrainCarts plugin;
@@ -48,6 +50,12 @@ public class TrainCarts extends PluginBase {
 	public PisController PisController;
 	public PlayerController PlayerController;
 	public MetroLine global = null; 
+	public MainServer server;
+	public ServerThread serverThread;
+	
+	public String version = "2.0";
+	public String mcVersion = "1.20.1";
+	public String author = "Movies22";
 	@Override
 	public int getMinimumLibVersion() {
 		return Common.VERSION;
@@ -68,7 +76,7 @@ public class TrainCarts extends PluginBase {
 	public void enable() {
 		plugin.getLogger().log(Level.INFO, "Enabling TrainCarts...");
 		SignAction.init();
-		lines = new MetroLines();
+		this.lines = new MetroLines();
 		MemberController = new MinecartMemberController();
 		StationStore = new StationStore();
 		DepotStore = new DepotController();
@@ -304,8 +312,12 @@ public class TrainCarts extends PluginBase {
 		            	PisController.doFixedTick();
 		            }
 		        }, 
-		        1000L, 1000L
+		        1000L, 2000L
 		);
+		
+		this.server = new MainServer();
+		
+		StationStore.postParse();
 		
 		CommandLoader._init();
 		spawnerTask = new Task(plugin) {
@@ -340,9 +352,14 @@ public class TrainCarts extends PluginBase {
 			}
 		};
 		spawnerTask.start(100L, 20L);
+		memberMove.start(100L, 5L);
+		memberLoad.start(100L, 100L);
 		memberMove.start(100L, 4L);
 		memberLoad.start(100L, 100L);
 		playerUpdateTask.start(100L, 20L);
+		
+		serverThread = new ServerThread(this.server);
+		serverThread.run();
 	}
 
 	private String s = "";
@@ -363,6 +380,7 @@ public class TrainCarts extends PluginBase {
 		memberLoad = null;
 		spawnerTask.stop();
 		spawnerTask = null;
+		serverThread.interrupt();
 		s = "";
 		List<MinecartMember> z = new ArrayList<MinecartMember>(MemberController.getHeads());
 		z.forEach(m -> {

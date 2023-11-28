@@ -1,3 +1,4 @@
+
 package com.movies22.cashcraft.tc.api;
 
 
@@ -18,62 +19,45 @@ public class VirtualMinecart {
 	};
 	
 	public Location getLocation() {
-<<<<<<< Updated upstream
-=======
 		return this.getLocation(false);
 	}
 	
-	public Location getLocation(Boolean offsetted) {
->>>>>>> Stashed changes
+	public Location getLocation(Boolean b) {
 		if(!virtualized) {
 			return ent.getLocation();
 		} else {
 			Entity e = pivot.getEntity();
-<<<<<<< Updated upstream
-			Location l;
-			Location l2 = e.getLocation().clone();
-			switch(pivot.facing) {
-				case NORTH:
-					l = l2.add(0, 0, -this.offset);
-					break;
-				case EAST:
-					l = l2.add(-this.offset, 0, 0);
-					break;
-				case SOUTH:
-					l = l2.add(0, 0, this.offset);
-=======
-			if(!offsetted) {
+			if(b) {
 				return e.getLocation();
 			}
 			Location l = e.getLocation().clone();
 			switch(this.pivot.facing) {
 				case EAST:
-					l.subtract(this.offset, 0, 0);
+					l.add(this.offset, 0, 0);
 					break;
 				case NORTH:
-					l.add(0, 0, this.offset);
->>>>>>> Stashed changes
-					break;
-				case SOUTH:
 					l.subtract(0, 0, this.offset);
 					break;
+				case SOUTH:
+					l.add(0, 0, this.offset);
+					break;
 				case WEST:
-<<<<<<< Updated upstream
-					l =l2.add(this.offset, 0, 0);
-=======
-					l.add(this.offset, 0, 0);
->>>>>>> Stashed changes
+					l.subtract(this.offset, 0, 0);
 					break;
 				default:
-					l = l2;
 					break;
-			};
+				
+			}
 			return l;
 		}
 	}
 	
 	public void setVirtualized(Boolean b) {
 		this.virtualized = b;
+	}
+	
+	public void setOffset(Double o) {
+		this.offset = o;
 	}
 	
 	public Boolean getVirtualized() {
@@ -88,25 +72,17 @@ public class VirtualMinecart {
 	}
 	
 	public Boolean load() {
-<<<<<<< Updated upstream
-		Location l = this.getLocation();
-		World w = l.getWorld();
-		Entity e = (Entity) w.spawnEntity(l, EntityType.MINECART);
-		this.setVirtualized(false);
-		this.ent = e;
-=======
 		return this.load(false);
 	}
 	
-	public Boolean load(Boolean offset) {
+	public Boolean load(Boolean b) {
 		if(this.virtualized) {
-			Location l = this.getLocation(offset);
+			Location l = this.getLocation(!b);
 			World w = l.getWorld();
 			Entity e = (Entity) w.spawnEntity(l, EntityType.MINECART);
 			this.setVirtualized(false);
 			this.ent = e;
 		}
->>>>>>> Stashed changes
 		return true;
 	}
 	

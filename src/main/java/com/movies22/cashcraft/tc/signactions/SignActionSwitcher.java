@@ -28,13 +28,14 @@ public class SignActionSwitcher extends SignAction {
 		t = null;
 		BlockFace s = group.head().facing;
 		this.node.connections.forEach(con -> {
-			if(con.getEndNode() != null && con.getEndNode().equals(group.head().getNextNode(1, true))) {
+			if(con.getEndNode() != null && (con.getEndNode().equals(group.head().getNextNode(0, true)) || con.getEndNode().equals(group.head().getNextNode(1, true)))) {
 				t = con;
 			}
 		});
 		Rail.Shape a;
 		if(t == null) {
 			group.destroy(Despawn.INVALID_HEADING);
+			return false;
 		}
 		if(s.getOppositeFace().equals(t.facing)) {
 			try {
@@ -54,6 +55,7 @@ public class SignActionSwitcher extends SignAction {
 				try {
 					a = Rail.Shape.valueOf(t.facing + "_" + s.getOppositeFace());
 				} catch(IllegalArgumentException e2) {
+					TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: FAILED to find connection between " + t.facing.toString() + " and " + s.getOppositeFace().toString());
 					group.destroy(Despawn.INVALID_ROUTE);
 					throw(e2);
 				}
