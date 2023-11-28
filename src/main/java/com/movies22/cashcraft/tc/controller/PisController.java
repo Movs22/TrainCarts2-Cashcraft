@@ -130,13 +130,14 @@ public class PisController extends BaseController {
 		}
 		
 		public String getTime(int g) {
-			if(g > 45) {
+			g = g + 5;
+			if(g > 59) {
 				int b = g % 60;
-				int a = (g - b % 10 + 10) / 60;
+				int a = (g - b % 10) / 60;
 				if(b < 5) {
 					return a + ":05";
 				} else if(b < 59) {
-					return a + ":" + (b - b % 5 + 10);
+					return a + ":" + (b - b % 5);
 				} else {
 					return a + ":00";
 				}
@@ -144,7 +145,7 @@ public class PisController extends BaseController {
 				if(g < 5) {
 					return "0:05";
 				} else {
-					return "0:" + (g - g % 5 + 10);
+					return "0:" + (g - g % 5);
 				}
 			}
 		}

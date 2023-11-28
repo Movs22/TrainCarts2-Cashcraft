@@ -74,7 +74,7 @@ public class Station {
 		return true;
 	}
 	
-	public String generateConnection( MetroLine l) {
+	public String generateConnection(MetroLine l) {
 		if(ann.get(l.getName()) == null) {
 		if(this.station.equals("")) return null;
 		Station s = TrainCarts.plugin.StationStore.getFromCode(this.station);
