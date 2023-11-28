@@ -354,8 +354,6 @@ public class TrainCarts extends PluginBase {
 		spawnerTask.start(100L, 20L);
 		memberMove.start(100L, 5L);
 		memberLoad.start(100L, 100L);
-		memberMove.start(100L, 4L);
-		memberLoad.start(100L, 100L);
 		playerUpdateTask.start(100L, 20L);
 		
 		serverThread = new ServerThread(this.server);

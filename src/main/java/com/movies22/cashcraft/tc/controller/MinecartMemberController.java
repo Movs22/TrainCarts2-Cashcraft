@@ -409,7 +409,7 @@ public class MinecartMemberController extends BaseController {
 				if (m._mod < 0.0) {
 					m._mod = 0.0;
 				}
-				/*if(m.index == (g.getMembers().size()) - 1 && g.lastCurve != null) {
+				if(m.index == (g.getMembers().size()) - 1 && g.lastCurve != null) {
 					if(g.lastCurve.distance(l) > 15.0) {
 						g.getMembers().forEach(mm -> {
 							mm.setMaxSpeed(mm._targetSpeed*mm._mod);
@@ -420,7 +420,7 @@ public class MinecartMemberController extends BaseController {
 							mm.getEntity().setMaxSpeed(0.4d);
 						});
 					}
-				}*/
+				}
 				
 				// Initializes variables for the vectors.
 				Double x = 0.0;
