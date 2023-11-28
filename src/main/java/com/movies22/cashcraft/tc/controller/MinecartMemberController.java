@@ -272,9 +272,6 @@ public class MinecartMemberController extends BaseController {
 					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
 						g.head()._targetSpeed = 0.4d;
 						m.getEntity().setMaxSpeed(0.4d);
-=======
-						m.setMaxSpeed(0.4d);
->>>>>>> Stashed changes
 						g.lastCurve = rail.getLocation();
 					} else {
 						m.setMaxSpeed(m._targetSpeed*m._mod);
