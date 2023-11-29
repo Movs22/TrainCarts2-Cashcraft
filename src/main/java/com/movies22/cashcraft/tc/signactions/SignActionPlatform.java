@@ -87,6 +87,7 @@ public class SignActionPlatform extends SignAction {
 		if(group.currentRoute.stops.size() > 0 && group.currentRoute.stops.get(0).equals(this)) {
 			stops = group.currentRoute.stops.size();
 			group.head().facing = this.node.direction;
+			group.currentPlat = this;
 			if(group.currentRoute.stops.size() <= 1) {
 				if(this.reverse) {
 					group.head().facing = this.node.direction.getOppositeFace(); 
