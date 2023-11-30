@@ -84,7 +84,6 @@ public class ChunkArea {
                LongIterator added_iter = this.added_chunk_centers.longIterator();
 
                while(true) {
-                  long coord;
                   do {
                      if (!added_iter.hasNext()) {
                         return;
@@ -118,7 +117,6 @@ public class ChunkArea {
             coord = iter.next();
          } while(!this.added_chunk_centers.add(coord));
 
-         int mx = MathUtil.longHashMsw(coord);
          mx = MathUtil.longHashLsw(coord);
 
          for(mz = -2; mz <= 2; ++mz) {
