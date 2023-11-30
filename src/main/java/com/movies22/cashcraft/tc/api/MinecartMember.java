@@ -1,255 +1,249 @@
 package com.movies22.cashcraft.tc.api;
 
-import java.util.List;
-
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Minecart;
-import org.bukkit.entity.TextDisplay;
-
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.PathFinding.PathOperation;
+import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
+import java.util.List;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Minecart;
+import org.bukkit.entity.TextDisplay;
 
 public class MinecartMember implements Comparable<MinecartMember> {
-	private MinecartGroup group;
-	private VirtualMinecart entity;
-	public Double _mod = 1.0;
-	public Double currentSpeed = 0.0;
-	private List<PathOperation> route = null;
-	public Double _targetSpeed = 0.4;
-	public PathNode prevNode = null;
-	public int index;
-	public TextDisplay destination;
-	public String destinationPos;
-	public PathOperation lastCon = null;
-	public BlockFace facing;
-	public Chunk lastChunk;
-	public SignAction lastAction;
-	public Boolean spawned = false;
-	public Boolean virtualized = true;
+   private MinecartGroup group;
+   private VirtualMinecart entity;
+   public Double _mod = 1.0D;
+   public Double currentSpeed = 0.0D;
+   private List<PathOperation> route = null;
+   public Double _targetSpeed = 0.4D;
+   public PathNode prevNode = null;
+   public int index;
+   public TextDisplay destination;
+   public String destinationPos;
+   public PathOperation lastCon = null;
+   public BlockFace facing;
+   public Chunk lastChunk;
+   public SignAction lastAction;
+   public Boolean spawned = false;
+   public Boolean virtualized = true;
+   String z;
 
-	MinecartMember(MinecartGroup g, Minecart e, int i) {
-		this.setGroup(g);
-		this.facing = g._getSpawn().direction;
-		this.index = i;
-		this.spawned = false;
-		if (i == 0) {
-			this.setEntity(new VirtualMinecart(e, this, 0.0d));
-		} else {
-			this.setEntity(new VirtualMinecart(e, group.head(), i * 1.5d));
-		}
-		TrainCarts.plugin.MemberController.addMember(e.getUniqueId(), this);
-	}
+   MinecartMember(MinecartGroup g, Minecart e, int i) {
+      this.setGroup(g);
+      this.facing = g._getSpawn().direction;
+      this.index = i;
+      this.spawned = false;
+      if (i == 0) {
+         this.setEntity(new VirtualMinecart(e, this, 0.0D));
+      } else {
+         this.setEntity(new VirtualMinecart(e, this.group.head(), (double)i * 1.5D));
+      }
 
-	public void setPivot(MinecartMember mm) {
-		this.entity.setPivot(mm);
-	}
+      TrainCarts.plugin.MemberController.addMember(e.getUniqueId(), this);
+   }
 
-	public void setOffset(Double o) {
-		this.entity.setOffset(o);
-	}
+   public void setPivot(MinecartMember mm) {
+      this.entity.setPivot(mm);
+   }
 
-	public Location getLocation() {
-		return this.entity.getLocation();
-	}
+   public void setOffset(Double o) {
+      this.entity.setOffset(o);
+   }
 
-	public Boolean destroy() {
-		try {
-			if (this.getEntity() != null) {
-				TrainCarts.plugin.MemberController.removeMember(this);
-				this.getEntity().remove();
-			}
-			this.route.clear();
-			this.route = null;
-			return true;
-		} catch (Error e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+   public Boolean destroy() {
+      try {
+         if (this.getEntity() != null) {
+            TrainCarts.plugin.MemberController.removeMember(this);
+            this.getEntity().remove();
+         }
 
-	public Boolean eject() {
-		try {
-			if (this.getEntity() != null) {
-				this.getEntity().eject();
-			}
-			return true;
-		} catch (Error e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+         this.route.clear();
+         this.route = null;
+         return true;
+      } catch (Error var2) {
+         var2.printStackTrace();
+         return false;
+      }
+   }
 
-	public MinecartGroup getGroup() {
-		return group;
-	}
+   public Boolean eject() {
+      try {
+         if (this.getEntity() != null) {
+            this.getEntity().eject();
+         }
 
-	public void setGroup(MinecartGroup group) {
-		this.group = group;
-	}
+         return true;
+      } catch (Error var2) {
+         var2.printStackTrace();
+         return false;
+      }
+   }
 
-	public Minecart getEntity() {
-		return (Minecart) this.entity.getEntity();
-	}
+   public void setMaxSpeed(Double speed) {
+      Minecart e = this.getEntity();
+      if (e != null) {
+         e.setMaxSpeed(speed);
+      }
 
-	public void setEntity(VirtualMinecart e) {
-		this.entity = e;
-	}
+   }
 
-	public MinecartMember nextCart() {
-		int nc = this.group.getMembers().indexOf(this);
-		if (nc < 1 || nc > (this.group.getMembers().size() - 1))
-			return null;
-		return this.group.getMember(nc - 1);
-	}
+   public MinecartGroup getGroup() {
+      return this.group;
+   }
 
-	public List<PathOperation> getLocalRoute() {
-		return route;
-	}
+   public void setGroup(MinecartGroup group) {
+      this.group = group;
+   }
 
-	public Location getNextLocation() {
-		if (this.route == null)
-			return null;
-		if (this.route.size() == 0) {
-			this.group.destroy();
-			return null;
-		}
-		if (this.route.get(0).locs.size() < 1) {
-			if (this.route.size() > 1) {
-				this.lastCon = this.route.get(0).clone();
-				this.route.remove(0);
-			} else {
-				this.lastCon = this.route.get(0).clone();
-				this.route.remove(0);
-				this.loadNextRoute();
-			}
-		}
-		if (this.route.size() == 0) {
-			this.group.destroy();
-			return null;
-		}
-		if (this.route.get(0).locs.size() > 0) {
-			return this.route.get(0).locs.get(0);
-		} else {
-			this.group.destroy();
-			return null;
-		}
-	}
+   public Minecart getEntity() {
+      return (Minecart)this.entity.getEntity();
+   }
 
-	public PathNode getNextNode() {
-		return this.getNextNode(0, false);
-	}
+   public void setEntity(VirtualMinecart e) {
+      this.entity = e;
+   }
 
-	public PathNode getNextNode(int i) {
-		return this.getNextNode(i, false);
-	}
+   public MinecartMember nextCart() {
+      int nc = this.group.getMembers().indexOf(this);
+      return nc >= 1 && nc <= this.group.getMembers().size() - 1 ? this.group.getMember(nc - 1) : null;
+   }
 
-	public PathNode getNextNode(int i, boolean b) {
-		if (this.route == null)
-			return null;
-		if (i == 0) {
-			PathNode a = this.route.get(0).getEndNode();
-			if (((a.getAction() instanceof SignActionBlocker) || (a.getAction() instanceof SignActionRBlocker)) && !b) {
-				return this.getNextNode(1);
-			} else {
-				return a;
-			}
-		} else {
-			if(this.route.size() > i) { 
-			PathNode a = this.route.get(i).getEndNode();
-			if (((a.getAction() instanceof SignActionBlocker) || (a.getAction() instanceof SignActionRBlocker)) && !b) {
-				return this.getNextNode(i + 1);
-			} else {
-				return a;
-			}
-			}
-			return null;
-		}
-	}
+   public List<PathOperation> getLocalRoute() {
+      return this.route;
+   }
 
-	String z;
+   public Location getNextLocation() {
+      if (this.route == null) {
+         return null;
+      } else if (this.route.size() == 0) {
+         this.group.destroy();
+         return null;
+      } else {
+         if (((PathOperation)this.route.get(0)).locs.size() < 1) {
+            if (this.route.size() > 1) {
+               this.lastCon = ((PathOperation)this.route.get(0)).clone();
+               this.route.remove(0);
+            } else {
+               this.lastCon = ((PathOperation)this.route.get(0)).clone();
+               this.route.remove(0);
+               this.loadNextRoute();
+            }
+         }
 
-	public void proceedTo(Location l) {
-		if(this.route == null) {
-			return;
-		}
-		if (this.route.get(0).locs.size() != 0) {
-			if (this.route.get(0).locs.indexOf(l) > -1) {
-				this.lastCon = this.route.get(0).clone();
-				this.route.get(0).locs.remove(0);
-			} else {
-				this.lastCon = this.route.get(0).clone();
-				this.route.remove(0);
-			}
-		} else {
-			if (this.route.size() > 1) {
-				this.lastCon = this.route.get(0).clone();
-				this.route.remove(0);
-			} else {
-				this.lastCon = this.route.get(0).clone();
-				this.route.remove(0);
-			}
-		}
-	}
+         if (this.route.size() == 0) {
+            this.group.destroy();
+            return null;
+         } else if (((PathOperation)this.route.get(0)).locs.size() > 0) {
+            return (Location)((PathOperation)this.route.get(0)).locs.get(0);
+         } else {
+            this.group.destroy();
+            return null;
+         }
+      }
+   }
 
-	public void setLocalRoute(List<PathOperation> route) {
-		this.route = route;
-		return;
-	}
+   public PathNode getNextNode() {
+      return this.getNextNode(0, false);
+   }
 
-	public void loadNextRoute() {
-		if (this.group.routes.size() < 1) {
-			this.group.destroy();
-			return;
-		}
-		this.route = this.group.routes.get(0).clone().route;
-		if (this.lastCon == null) {
-			this.lastCon = this.route.get(0).clone();
-		}
-		return;
-	}
+   public PathNode getNextNode(int i) {
+      return this.getNextNode(i, false);
+   }
 
-	public Double getTargetSpeed() {
-		if (this._targetSpeed != null)
-			return this._targetSpeed;
-		return this.group.getTargetSpeed();
-	}
+   public PathNode getNextNode(int i, boolean b) {
+      if (this.route == null) {
+         return null;
+      } else {
+         PathNode a;
+         if (i == 0) {
+            a = ((PathOperation)this.route.get(0)).getEndNode();
+            return (a.getAction() instanceof SignActionBlocker || a.getAction() instanceof SignActionRBlocker) && !b ? this.getNextNode(1) : a;
+         } else if (this.route.size() <= i) {
+            return null;
+         } else {
+            a = ((PathOperation)this.route.get(i)).getEndNode();
+            return (a.getAction() instanceof SignActionBlocker || a.getAction() instanceof SignActionRBlocker) && !b ? this.getNextNode(i + 1) : a;
+         }
+      }
+   }
 
-	@Override
-	public String toString() {
-		return "" + this.getGroup().getHeadcode() + "/" + this.index + " | " + this.hashCode();
+   public void proceedTo(Location l) {
+      if (this.route != null) {
+         if (((PathOperation)this.route.get(0)).locs.size() != 0) {
+            if (((PathOperation)this.route.get(0)).locs.indexOf(l) > -1) {
+               this.lastCon = ((PathOperation)this.route.get(0)).clone();
+               ((PathOperation)this.route.get(0)).locs.remove(0);
+            } else {
+               this.lastCon = ((PathOperation)this.route.get(0)).clone();
+               this.route.remove(0);
+            }
+         } else if (this.route.size() > 1) {
+            this.lastCon = ((PathOperation)this.route.get(0)).clone();
+            this.route.remove(0);
+         } else {
+            this.lastCon = ((PathOperation)this.route.get(0)).clone();
+            this.route.remove(0);
+         }
 
-	}
+      }
+   }
 
-	@Override
-	public int compareTo(MinecartMember m) {
-		return (int) (this.index - m.index);
-	}
+   public void setLocalRoute(List<PathOperation> route) {
+      this.route = route;
+   }
 
-	public Boolean virtualize() {
-		this.virtualized = true;
-		this.getEntity().remove();
-		this.entity.setVirtualized(true);
-		return true;
-	}
+   public void loadNextRoute() {
+      if (this.group.routes.size() < 1) {
+         this.group.destroy();
+      } else {
+         this.route = ((PathRoute)this.group.routes.get(0)).clone().route;
+         if (this.lastCon == null) {
+            this.lastCon = ((PathOperation)this.route.get(0)).clone();
+         }
 
-	public Boolean load() {
-		if(this._targetSpeed == 0.0) {
-			return this.load(true);
-		}
-		return this.load(false);
-	}
+      }
+   }
 
-	public Boolean load(Boolean b) {
-		this.entity.load(false);
-		this.virtualized = false;
-		TrainCarts.plugin.MemberController.addMember(this.getEntity().getUniqueId(), this);
-		return true;
-	}
+   public Double getTargetSpeed() {
+      return this._targetSpeed != null ? this._targetSpeed : this.group.getTargetSpeed();
+   }
+
+   public String toString() {
+      return this.getGroup().getHeadcode() + "/" + this.index + " | " + this.hashCode();
+   }
+
+   public int compareTo(MinecartMember m) {
+      return this.index - m.index;
+   }
+
+   public Boolean virtualize() {
+      this.virtualized = true;
+      this.getEntity().remove();
+      this.entity.setVirtualized(true);
+      return true;
+   }
+
+   public Boolean load() {
+      return this._targetSpeed == 0.0D ? this.load(true) : this.load(false);
+   }
+
+   public Location getLocation() {
+      return this.getLocation(true);
+   }
+
+   public Location getLocation(Boolean offset) {
+      return this.entity.getLocation(offset);
+   }
+
+   public Boolean load(Boolean offset) {
+      this.entity.load(offset);
+      this.virtualized = false;
+      TrainCarts.plugin.MemberController.addMember(this.getEntity().getUniqueId(), this);
+      return true;
+   }
 }

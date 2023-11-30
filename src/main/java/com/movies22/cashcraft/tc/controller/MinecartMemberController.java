@@ -1,555 +1,596 @@
-
 package com.movies22.cashcraft.tc.controller;
 
+import com.movies22.cashcraft.tc.PathFinding.PathNode;
+import com.movies22.cashcraft.tc.api.MinecartGroup;
+import com.movies22.cashcraft.tc.api.MinecartMember;
+import com.movies22.cashcraft.tc.signactions.SignAction;
+import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
+import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
+import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Rail;
+import org.bukkit.block.data.Rail.Shape;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.util.Vector;
 
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.api.MinecartMember;
-import com.movies22.cashcraft.tc.api.MinecartGroup;
-import com.movies22.cashcraft.tc.signactions.SignAction;
-import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
-import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
-
 public class MinecartMemberController extends BaseController {
-	private ConcurrentHashMap<UUID, MinecartMember> MinecartMembers;
-	private ConcurrentHashMap<UUID, MinecartMember> MinecartHeadMembers;
-	public MinecartMemberController() {
-		this.MinecartMembers = new ConcurrentHashMap<UUID, MinecartMember>();
-		this.MinecartHeadMembers = new ConcurrentHashMap<UUID, MinecartMember>();
-	}
+   private ConcurrentHashMap<UUID, MinecartMember> MinecartMembers = new ConcurrentHashMap();
+   private ConcurrentHashMap<UUID, MinecartMember> MinecartHeadMembers = new ConcurrentHashMap();
+   private Double speed;
+   Boolean b = false;
+   // $FF: synthetic field
+   private static volatile int[] $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape;
 
-	public void addMember(MinecartMember m) {
-		this.addMember(m.getEntity().getUniqueId(), m);
-	}
-	
-	public Collection<MinecartMember> getHeads() {
-		return this.MinecartHeadMembers.values();
-	}
-	
-	public Collection<MinecartMember> getMembers() {
-		return this.MinecartMembers.values();
-	}
+   public void addMember(MinecartMember m) {
+      this.addMember(m.getEntity().getUniqueId(), m);
+   }
 
-	public void addMember(UUID e, MinecartMember m) {
-		if (m.index == 0) {
-			MinecartHeadMembers.putIfAbsent(e, m);
-		} else {
-			MinecartMembers.putIfAbsent(e, m);
-		}
-	}
+   public Collection<MinecartMember> getHeads() {
+      return this.MinecartHeadMembers.values();
+   }
 
-	public void removeMember(MinecartMember m) {
-		if(m.getEntity() == null) {
-			return;
-		}
-		if (m.index == 0) {
-			MinecartHeadMembers.remove(m.getEntity().getUniqueId());
-		} else {
-			MinecartMembers.remove(m.getEntity().getUniqueId());
-		}
-	}
+   public Collection<MinecartMember> getMembers() {
+      return this.MinecartMembers.values();
+   }
 
-	public MinecartMember getFromUUID(UUID e) {
-		if (MinecartMembers.get(e) != null) {
-			return MinecartMembers.get(e);
-		} else {
-			return MinecartHeadMembers.get(e);
-		}
-	}
+   public void addMember(UUID e, MinecartMember m) {
+      if (m.index == 0) {
+         this.MinecartHeadMembers.putIfAbsent(e, m);
+      } else {
+         this.MinecartMembers.putIfAbsent(e, m);
+      }
 
-	public MinecartMember getFromEntity(Entity e) {
-		return this.getFromUUID(e.getUniqueId());
-	}
+   }
 
-	private Double speed;
+   public void removeMember(MinecartMember m) {
+      if (m.getEntity() != null) {
+         if (m.index == 0) {
+            this.MinecartHeadMembers.remove(m.getEntity().getUniqueId());
+         } else {
+            this.MinecartMembers.remove(m.getEntity().getUniqueId());
+         }
 
-	public Vector rotate(Vector vector, double angle) { // angle in radians
+      }
+   }
 
-		// normalize(vector); // No need to normalize, vector is already ok...
-		angle = angle / 180 * Math.PI;
-		float x1 = (float) (vector.getX() * Math.cos(angle) - vector.getZ() * Math.sin(angle));
+   public MinecartMember getFromUUID(UUID e) {
+      return this.MinecartMembers.get(e) != null ? (MinecartMember)this.MinecartMembers.get(e) : (MinecartMember)this.MinecartHeadMembers.get(e);
+   }
 
-		float z1 = (float) (vector.getX() * Math.sin(angle) + vector.getZ() * Math.cos(angle));
-		return new Vector(x1, vector.getY(), z1);
-	}
+   public MinecartMember getFromEntity(Entity e) {
+      return this.getFromUUID(e.getUniqueId());
+   }
 
-	public Boolean validate(MinecartMember m) {
-		if(m.virtualized) {
-			return true;
-		}
-		Entity e = (Entity) m.getEntity();
-		if (e.isDead() || m == null || m.getGroup() == null || e == null) {
-			return false;
-		}
-		//Location l2 = e.getLocation().subtract(0, 1, 0);
-		/*if( ( !e.getLocation().getBlock().getType().equals(Material.RAIL) && !e.getLocation().getBlock().getType().equals(Material.POWERED_RAIL)) && (!l2.getBlock().getType().equals(Material.RAIL) && !l2.getBlock().getType().equals(Material.POWERED_RAIL))) {
-			return false;
-		}*/
-		return true;
-	}
-	
-	Boolean b = false;
+   public Vector rotate(Vector vector, double angle) {
+      angle = angle / 180.0D * 3.141592653589793D;
+      float x1 = (float)(vector.getX() * Math.cos(angle) - vector.getZ() * Math.sin(angle));
+      float z1 = (float)(vector.getX() * Math.sin(angle) + vector.getZ() * Math.cos(angle));
+      return new Vector((double)x1, vector.getY(), (double)z1);
+   }
 
-	@Override
-	public void doFixedTick() {
-		this.MinecartHeadMembers.values().forEach(m -> {
-			if (!m.spawned)
-				return;
-			if (this.validate(m)) {
-				Minecart e = (Minecart) m.getEntity();
-				MinecartGroup g = m.getGroup();
+   public Boolean validate(MinecartMember m) {
+      if (m.virtualized) {
+         return true;
+      } else {
+         Entity e = m.getEntity();
+         return !e.isDead() && m != null && m.getGroup() != null && e != null ? true : false;
+      }
+   }
 
-				Location l = e.getLocation();
-				Location nextLoc = m.getNextLocation();
-				PathNode n = m.getNextNode();
-				PathNode n2 = m.getNextNode(1);
-				Location nextNode;
-				if (n != null) {
-					nextNode = n.loc;
-					if(nextLoc == null) {
-						nextLoc = nextNode;
-					}
-				} else {
-					nextNode = l;
-					nextLoc = l;
-				}
-				Double nd = l.distance(nextNode);
-				Double ld = l.distance(nextLoc);
-				Double nd2 = 0.0;
-				if(n2 != null) {
-					nd2 = l.distance(n2.loc);
-				}
-				if (m._targetSpeed >= 0.05 && m.lastAction != null && !m.lastAction.ExitExecuted.contains(g)
-						&& m.lastAction != n.getAction()) {
-					m.lastAction.ExitExecuted.add(g);
-					m.lastAction.exit(m.getGroup());
-					m.lastAction.executed.remove(m.getGroup());
-					m.lastAction.node.onBlock = null;
-					m.lastAction = null;
-				}
-				if(g.currentRoute.stops == null) {
-					return;
-				}
-				if(g.currentRoute.stops.size() > 0) {
-					PathNode st = g.currentRoute.stops.get(0).node;
-					Double sd = l.distance(st.loc);
-					if(sd < 10 && st.onBlock != null && !st.onBlock.equals(g) && !st.onBlock.despawned) {
-						g.getMembers().forEach(mm -> {
-							mm.currentSpeed = Double.MIN_VALUE;
-							if(!mm.virtualized || mm.index == 0) {
-								mm.getEntity().setMaxSpeed(0.0);
-							}
-						});
-					}
-					g.canProceed = false;
-				}
-				if(nd < 20 && (n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned) || (n2 != null && nd2 < 3 && (n2.onBlock != null && !n2.onBlock.equals(g) && !n2.onBlock.despawned))) {
-					g.getMembers().forEach(mm -> {
-						mm.currentSpeed = Double.MIN_VALUE;
-						if(!mm.virtualized || mm.index == 0) {
-							mm.getEntity().setMaxSpeed(0.0);
-						}
-					});
-					g.canProceed = false;
-					return;
-				} else if(nd < 20 && !g.getHeadcode().startsWith("0") ) {
-					n.onBlock = g;
-					if(n2 != null && (nd2 < 3 && !g.getHeadcode().startsWith("0") )) {
-						n2.onBlock = g;
-					}
-					g.canProceed = true;
-				} else {
-					g.canProceed = true;
-				}
-				if (nd < 10.0) {
-					if(n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
-						speed = Math.abs(m._targetSpeed - n.getAction().getSpeedLimit(g)) * ((nd + 2.0) / 12.0)
-							+ n.getAction().getSpeedLimit(g);
-						m.currentSpeed = speed;
-					}
-				} 
-				
-				m._mod = 1.0;
+   public void doFixedTick() {
+      this.MinecartHeadMembers.values().forEach((m) -> {
+         if (m.spawned) {
+            if (this.validate(m)) {
+               Minecart e = m.getEntity();
+               MinecartGroup g = m.getGroup();
+               Location l = e.getLocation();
+               Location nextLoc = m.getNextLocation();
+               PathNode n = m.getNextNode();
+               PathNode n2 = m.getNextNode(1);
+               Location nextNode;
+               if (n != null) {
+                  nextNode = n.loc;
+                  if (nextLoc == null) {
+                     nextLoc = nextNode;
+                  }
+               } else {
+                  nextNode = l;
+                  nextLoc = l;
+               }
 
-				if (m.currentSpeed < 0.05) {
-					m.currentSpeed = 0.0;
-				}
-				// Initializes variables for the vectors.
-				Double x = 0.0;
-				Double z = 0.0;
-				int i = 0;
-				if (nextLoc != null) {
-					x = nextLoc.getX() - l.getX();
-					z = nextLoc.getZ() - l.getZ();
-				}
-				if (m._targetSpeed > 0.05) {
-					while (i < 5 && (ld < (2.0) || nd < (1.0 + m._targetSpeed))) {
-						if (nd < (2.0)) {
-							SignAction b = n.getAction();
-							if (!b.executed.contains(g) && !b.getClass().equals(SignActionBlocker.class) && !b.getClass().equals(SignActionRBlocker.class)) {
-								b.ExitExecuted.remove(g);
-								if (b.getSpeedLimit(g) != null) {
-									double s = b.getSpeedLimit(g);
-									g.getMembers().forEach(mm -> {
-										mm._targetSpeed = s;
-										if(!mm.virtualized) {
-											mm.getEntity().setMaxSpeed(s*mm._mod);
-										}
-										mm.currentSpeed = s;
-									});
-								}
-								m.prevNode = m.getNextNode();
-								m.lastAction = b;
-								b.execute(g);
-								b.executed.add(g);
-							}
-						}
-						if(ld >= (2.0)) {
-							break;
-						}
-						m.proceedTo(nextLoc);
-						nextLoc = m.getNextLocation();
-						nextNode = m.getNextNode().loc;
-						if (nextLoc == null) {
-							i = 5;
-							break;
-						}
-						x = nextLoc.getX() - l.getX();
-						z = nextLoc.getZ() - l.getZ();
-						while((x == 0 && z == 0)) {
-							m.proceedTo(nextLoc);
-							nextLoc = m.getNextLocation();
-							nextNode = m.getNextNode().loc;
-							if (nextLoc == null) {
-								i = 5;
-								break;
-							}
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							i++;
-						}
-						if (n != null) {
-							nextNode = n.loc;
-							if(nextLoc == null) {
-								nextLoc = nextNode;
-							}
-						} else {
-							nextNode = l;
-							nextLoc = l;
-						}
-						nd = l.distance(nextNode);
-						ld = l.distance(nextLoc);
-					}
-				}
-				Double ts = m._targetSpeed;
-				if (Math.round(m.currentSpeed * 100) < (ts * 100) && Math.round(m.currentSpeed * 100) < (ts * 100 - 5)) {
-					m.currentSpeed += 0.05;
-				} else if (Math.round(m.currentSpeed * 100) > (ts * 100) && Math.round(m.currentSpeed * 100) > (ts + 5 * 100)) {
-					m.currentSpeed -= 0.05;
-				}
-				speed = m.currentSpeed;
-				m.setMaxSpeed(m._targetSpeed*m._mod);
-				Block rail = e.getLocation().getBlock();
-				if(!g.virtualized) {
-					if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))) {
-						g.destroy();
-						return;
-					}
-				}
-				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
-					Rail rail2 = (Rail) rail.getBlockData();
-					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
-						g.head()._targetSpeed = 0.4d;
-						m.getEntity().setMaxSpeed(0.4d);
-						g.lastCurve = rail.getLocation();
-					} else {
-						m.setMaxSpeed(m._targetSpeed*m._mod);
-					}
-					switch(rail2.getShape()) {
-						case EAST_WEST:
-							x = nextLoc.getX() - l.getX();
-							if(x > 0) {
-								m.facing = BlockFace.EAST;
-							} else {
-								m.facing = BlockFace.WEST;
-							}
-							z = 0.0;
-							break;
-						case NORTH_SOUTH:
-							x = 0.0;
-							z = nextLoc.getZ() - l.getZ();
-							if(z > 0) {
-								m.facing = BlockFace.SOUTH;
-							} else {
-								m.facing = BlockFace.NORTH;
-							}
-							break;
-						case SOUTH_EAST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							if(z > 0) {
-								m.facing = BlockFace.SOUTH;
-							} else {
-								m.facing = BlockFace.EAST;
-							}
-							break;
-						case SOUTH_WEST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							if(z > 0) {
-								m.facing = BlockFace.SOUTH;
-							} else {
-								m.facing = BlockFace.WEST;
-							}
-							break;
-						case NORTH_WEST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							if(z < 0) {
-								m.facing = BlockFace.NORTH;
-							} else {
-								m.facing = BlockFace.WEST;
-							}
-							break;
-						case NORTH_EAST:
-							x = nextLoc.getX() - l.getX();
-							z = nextLoc.getZ() - l.getZ();
-							if(z < 0) {
-								m.facing = BlockFace.NORTH;
-							} else {
-								m.facing = BlockFace.EAST;
-							}
+               Double nd = l.distance(nextNode);
+               Double ld = l.distance(nextLoc);
+               Double nd2 = 0.0D;
+               if (n2 != null) {
+                  nd2 = l.distance(n2.loc);
+               }
 
-							break;
-						case ASCENDING_NORTH: 
-							x = 0.0;
-							z = nextLoc.getZ() - l.getZ();
-							m.facing = BlockFace.NORTH;
-							break;
-						case ASCENDING_SOUTH: 
-							x = 0.0;
-							z = nextLoc.getZ() - l.getZ();
-							m.facing = BlockFace.SOUTH;
-							break;
-						case ASCENDING_EAST: 
-							x = nextLoc.getX() - l.getX();
-							z = 0.0;
-							m.facing = BlockFace.EAST;
-							break;
-						case ASCENDING_WEST: 
-							x = nextLoc.getX() - l.getX();
-							z = 0.0;
-							m.facing = BlockFace.WEST;
-							break;
-						default:
-							break;
-					}
-				} 
-				Vector vel;
-				if (x == 0 && z != 0) {
-					vel = new Vector(0, 0, z / Math.abs(z));
-				} else if (z == 0 && x != 0) {
-					vel = new Vector(x / Math.abs(x), 0, 0);
-				} else if (x == 0 && z == 0) {
-					vel = new Vector(0, 0, 0);
-					/*HashMap<String, String> a = new HashMap<String, String>();
-					a.putIfAbsent("X", "" + x);
-					a.putIfAbsent("Z", "" + z);
-					g.destroy(Despawn.INVALID_HEADING, a);
-					return;*/
-				} else {
-					vel = new Vector(x / Math.abs(x), 0, z / Math.abs(z));
-				}
-				speed = m.currentSpeed;				
-				if (e.getPassengers().size() > 0) {
-					vel = vel.multiply(4);
-					vel = vel.divide(new Vector(3, 3, 3));
-				}
-				e.setVelocity(vel.multiply(speed));
-			} else {
-				m.getGroup().destroy();
-			}
-		});
-		
-		this.MinecartMembers.values().forEach(m -> {
-			if (!m.spawned)
-				return;
-			if (this.validate(m)) {
-				Minecart e = (Minecart) m.getEntity();
-				MinecartGroup g = m.getGroup();
-				if(!g.canProceed) {
-					return;
-				}
-				Location l = e.getLocation();
+               if (m._targetSpeed >= 0.05D && m.lastAction != null && !m.lastAction.ExitExecuted.contains(g) && m.lastAction != n.getAction()) {
+                  m.lastAction.ExitExecuted.add(g);
+                  m.lastAction.exit(m.getGroup());
+                  m.lastAction.executed.remove(m.getGroup());
+                  m.lastAction.node.onBlock = null;
+                  m.lastAction = null;
+               }
 
-				m._targetSpeed = g.head()._targetSpeed;
-				m.currentSpeed = g.head().currentSpeed;
-				MinecartMember nextCart = m.nextCart();
-				if (nextCart == null || nextCart.getEntity() == null) {
-					return;
-				}
-				m._mod = l.distance(nextCart.getLocation(true)) / 1.2;
+               if (g.currentRoute.stops == null) {
+                  return;
+               }
 
+               Double z;
+               if (g.currentRoute.stops.size() > 0) {
+                  PathNode st = ((SignActionPlatform)g.currentRoute.stops.get(0)).node;
+                  z = l.distance(st.loc);
+                  if (z < 10.0D && st.onBlock != null && !st.onBlock.equals(g) && !st.onBlock.despawned) {
+                     g.getMembers().forEach((mm) -> {
+                        mm.currentSpeed = Double.MIN_VALUE;
+                        mm.setMaxSpeed(0.0D);
+                     });
+                     g.canProceed = false;
+                  } else {
+                     if (nd < 20.0D && n.onBlock != null && !n.onBlock.equals(g) && !n.onBlock.despawned && n.onBlock.head().currentSpeed >= 0.05D && n.onBlock.canProceed || n2 != null && nd2 < 10.0D && n2.onBlock != null && !n2.onBlock.equals(g) && !n2.onBlock.despawned && n2.onBlock.head().currentSpeed >= 0.05D && n2.onBlock.canProceed) {
+                        g.getMembers().forEach((mm) -> {
+                           mm.currentSpeed = Double.MIN_VALUE;
+                           mm.setMaxSpeed(0.0D);
+                        });
+                        g.canProceed = false;
+                        return;
+                     }
 
-				if (m.currentSpeed < 0.05) {
-					m.currentSpeed = 0.0;
-				}
-				
-				if (m._mod < 0.0) {
-					m._mod = 0.0;
-				}
-				if(m.index == (g.getMembers().size()) - 1 && g.lastCurve != null) {
-					if(g.lastCurve.distance(l) > 15.0) {
-						g.getMembers().forEach(mm -> {
-							mm.setMaxSpeed(mm._targetSpeed*mm._mod);
-						});
-						g.lastCurve = null;
-					} else {
-						g.getMembers().forEach(mm -> {
-							mm.getEntity().setMaxSpeed(0.4d);
-						});
-					}
-				}
-				
-				// Initializes variables for the vectors.
-				Double x = 0.0;
-				Double z = 0.0;
-				Location nextLoc = m.nextCart().getEntity().getLocation();
-				
-				Double ts = g.head()._targetSpeed;
-				if (Math.round(m.currentSpeed * 100) < (ts * 100)) {
-					m.currentSpeed += 0.05;
-				} else if (Math.round(m.currentSpeed * 100) > (ts * 100)) {
-					m.currentSpeed -= 0.05;
-				}
-				speed = m.currentSpeed;
-				m.setMaxSpeed(ts*m._mod);
-				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
-				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
-					Rail rail2 = (Rail) rail.getBlockData();
-					switch(rail2.getShape()) {
-					case EAST_WEST:
-						x = nextLoc.getX() - l.getX();
-						if(x > 0) {
-							m.facing = BlockFace.EAST;
-						} else {
-							m.facing = BlockFace.WEST;
-						}
-						z = 0.0;
-						break;
-					case NORTH_SOUTH:
-						x = 0.0;
-						z = nextLoc.getZ() - l.getZ();
-						if(z > 0) {
-							m.facing = BlockFace.SOUTH;
-						} else {
-							m.facing = BlockFace.NORTH;
-						}
-						break;
-					case SOUTH_EAST:
-						x = nextLoc.getX() - l.getX();
-						z = nextLoc.getZ() - l.getZ();
-						if(z > 0) {
-							m.facing = BlockFace.SOUTH;
-						} else {
-							m.facing = BlockFace.EAST;
-						}
-						break;
-					case SOUTH_WEST:
-						x = nextLoc.getX() - l.getX();
-						z = nextLoc.getZ() - l.getZ();
-						if(z > 0) {
-							m.facing = BlockFace.SOUTH;
-						} else {
-							m.facing = BlockFace.WEST;
-						}
-						break;
-					case NORTH_WEST:
-						x = nextLoc.getX() - l.getX();
-						z = nextLoc.getZ() - l.getZ();
-						if(z < 0) {
-							m.facing = BlockFace.NORTH;
-						} else {
-							m.facing = BlockFace.WEST;
-						}
-						break;
-					case NORTH_EAST:
-						x = nextLoc.getX() - l.getX();
-						z = nextLoc.getZ() - l.getZ();
-						if(z < 0) {
-							m.facing = BlockFace.NORTH;
-						} else {
-							m.facing = BlockFace.EAST;
-						}
+                     if (nd < 20.0D && !g.getHeadcode().startsWith("0") && m._targetSpeed >= 0.0D) {
+                        n.onBlock = g;
+                        if (n2 != null && nd2 < 10.0D && !g.getHeadcode().startsWith("0") && m._targetSpeed >= 0.0D) {
+                           n2.onBlock = g;
+                        }
 
-						break;
-					case ASCENDING_NORTH: 
-						x = 0.0;
-						z = nextLoc.getZ() - l.getZ();
-						m.facing = BlockFace.NORTH;
-						break;
-					case ASCENDING_SOUTH: 
-						x = 0.0;
-						z = nextLoc.getZ() - l.getZ();
-						m.facing = BlockFace.SOUTH;
-						break;
-					case ASCENDING_EAST: 
-						x = nextLoc.getX() - l.getX();
-						z = 0.0;
-						m.facing = BlockFace.EAST;
-						break;
-					case ASCENDING_WEST: 
-						x = nextLoc.getX() - l.getX();
-						z = 0.0;
-						m.facing = BlockFace.WEST;
-						break;
-					default:
-						break;
-					}
-				} 
-				Vector vel;
-				if (x == 0 && z != 0) {
-					vel = new Vector(0, 0, z / Math.abs(z));
-				} else if (z == 0 && x != 0) {
-					vel = new Vector(x / Math.abs(x), 0, 0);
-				} else if (x == 0 && z == 0) {
-					vel = new Vector(0, 0, 0);
-					/*HashMap<String, String> a = new HashMap<String, String>();
-					a.putIfAbsent("X", "" + x);
-					a.putIfAbsent("Z", "" + z);
-					g.destroy(Despawn.INVALID_HEADING, a);*/
-					return;
-				} else {
-					vel = new Vector(x / Math.abs(x), 0, z / Math.abs(z));
-				}
-				speed = g.head().currentSpeed;
-				if (speed % 0.05 > 0.0) {
-					speed = speed - (speed % 0.05);
-				}
+                        g.canProceed = true;
+                     } else {
+                        g.canProceed = true;
+                     }
+                  }
+               }
 
-				if (speed < 0.05) {
-					speed = 0.0;
-				}
-				if (e.getPassengers().size() > 0) {
-					vel = vel.multiply(4);
-					vel = vel.divide(new Vector(3, 3, 3));
-				}
-				e.setVelocity(vel.multiply( (m._mod * speed) ));
-			} else {
-				m.getGroup().destroy();
-			}
-		});
-	}
-	
+               if (nd < 10.0D && n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05D) {
+                  this.speed = Math.abs(m._targetSpeed - n.getAction().getSpeedLimit(g)) * ((nd + 2.0D) / 12.0D) + n.getAction().getSpeedLimit(g);
+                  m.currentSpeed = this.speed;
+               }
+
+               m._mod = 1.0D;
+               if (m.currentSpeed < 0.05D) {
+                  m.currentSpeed = 0.0D;
+               }
+
+               Double x = 0.0D;
+               z = 0.0D;
+               int i = 0;
+               if (nextLoc != null) {
+                  x = nextLoc.getX() - l.getX();
+                  z = nextLoc.getZ() - l.getZ();
+               }
+
+               if (m._targetSpeed > 0.05D) {
+                  while(i < 5 && (ld < 2.0D || nd < 1.0D + m._targetSpeed)) {
+                     if (nd < 2.0D) {
+                        SignAction b = n.getAction();
+                        if (!b.executed.contains(g) && !b.getClass().equals(SignActionBlocker.class) && !b.getClass().equals(SignActionRBlocker.class)) {
+                           b.ExitExecuted.remove(g);
+                           if (b.getSpeedLimit(g) != null) {
+                              double s = b.getSpeedLimit(g);
+                              g.getMembers().forEach((mm) -> {
+                                 mm._targetSpeed = s;
+                                 if (!mm.virtualized) {
+                                    mm.getEntity().setMaxSpeed(s * mm._mod);
+                                 }
+
+                                 mm.currentSpeed = s;
+                              });
+                           }
+
+                           m.prevNode = m.getNextNode();
+                           m.lastAction = b;
+                           b.execute(g);
+                           b.executed.add(g);
+                        }
+                     }
+
+                     if (ld >= 2.0D) {
+                        break;
+                     }
+
+                     m.proceedTo(nextLoc);
+                     nextLoc = m.getNextLocation();
+                     nextNode = m.getNextNode().loc;
+                     if (nextLoc == null) {
+                        boolean var19 = true;
+                        break;
+                     }
+
+                     x = nextLoc.getX() - l.getX();
+
+                     for(z = nextLoc.getZ() - l.getZ(); x == 0.0D && z == 0.0D; ++i) {
+                        m.proceedTo(nextLoc);
+                        nextLoc = m.getNextLocation();
+                        nextNode = m.getNextNode().loc;
+                        if (nextLoc == null) {
+                           i = 5;
+                           break;
+                        }
+
+                        x = nextLoc.getX() - l.getX();
+                        z = nextLoc.getZ() - l.getZ();
+                     }
+
+                     if (n != null) {
+                        nextNode = n.loc;
+                        if (nextLoc == null) {
+                           nextLoc = nextNode;
+                        }
+                     } else {
+                        nextNode = l;
+                        nextLoc = l;
+                     }
+
+                     nd = l.distance(nextNode);
+                     ld = l.distance(nextLoc);
+                  }
+               }
+
+               Double ts = m._targetSpeed;
+               if ((double)Math.round(m.currentSpeed * 100.0D) < ts * 100.0D && (double)Math.round(m.currentSpeed * 100.0D) < ts * 100.0D - 5.0D) {
+                  m.currentSpeed = m.currentSpeed + 0.05D;
+               } else if ((double)Math.round(m.currentSpeed * 100.0D) > ts * 100.0D && (double)Math.round(m.currentSpeed * 100.0D) > ts + 500.0D) {
+                  m.currentSpeed = m.currentSpeed - 0.05D;
+               }
+
+               this.speed = m.currentSpeed;
+               m.setMaxSpeed(m._targetSpeed * m._mod);
+               Block rail = e.getLocation().getBlock();
+               if (!g.virtualized && l.distance(g.tail().getEntity().getLocation()) > 20.0D) {
+                  g.destroy();
+                  return;
+               }
+
+               if (rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
+                  Rail rail2 = (Rail)rail.getBlockData();
+                  if (!rail.getType().equals(Material.RAIL) && !rail2.getShape().name().contains("ASCENDING")) {
+                     m.setMaxSpeed(m._targetSpeed * m._mod);
+                  } else {
+                     m.setMaxSpeed(0.4D);
+                     g.lastCurve = rail.getLocation();
+                  }
+
+                  switch($SWITCH_TABLE$org$bukkit$block$data$Rail$Shape()[rail2.getShape().ordinal()]) {
+                  case 1:
+                     x = 0.0D;
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z > 0.0D) {
+                        m.facing = BlockFace.SOUTH;
+                     } else {
+                        m.facing = BlockFace.NORTH;
+                     }
+                     break;
+                  case 2:
+                     x = nextLoc.getX() - l.getX();
+                     if (x > 0.0D) {
+                        m.facing = BlockFace.EAST;
+                     } else {
+                        m.facing = BlockFace.WEST;
+                     }
+
+                     z = 0.0D;
+                     break;
+                  case 3:
+                     x = nextLoc.getX() - l.getX();
+                     z = 0.0D;
+                     m.facing = BlockFace.EAST;
+                     break;
+                  case 4:
+                     x = nextLoc.getX() - l.getX();
+                     z = 0.0D;
+                     m.facing = BlockFace.WEST;
+                     break;
+                  case 5:
+                     x = 0.0D;
+                     z = nextLoc.getZ() - l.getZ();
+                     m.facing = BlockFace.NORTH;
+                     break;
+                  case 6:
+                     x = 0.0D;
+                     z = nextLoc.getZ() - l.getZ();
+                     m.facing = BlockFace.SOUTH;
+                     break;
+                  case 7:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z > 0.0D) {
+                        m.facing = BlockFace.SOUTH;
+                     } else {
+                        m.facing = BlockFace.EAST;
+                     }
+                     break;
+                  case 8:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z > 0.0D) {
+                        m.facing = BlockFace.SOUTH;
+                     } else {
+                        m.facing = BlockFace.WEST;
+                     }
+                     break;
+                  case 9:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z < 0.0D) {
+                        m.facing = BlockFace.NORTH;
+                     } else {
+                        m.facing = BlockFace.WEST;
+                     }
+                     break;
+                  case 10:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z < 0.0D) {
+                        m.facing = BlockFace.NORTH;
+                     } else {
+                        m.facing = BlockFace.EAST;
+                     }
+                  }
+               }
+
+               Vector vel;
+               if (x == 0.0D && z != 0.0D) {
+                  vel = new Vector(0.0D, 0.0D, z / Math.abs(z));
+               } else if (z == 0.0D && x != 0.0D) {
+                  vel = new Vector(x / Math.abs(x), 0.0D, 0.0D);
+               } else if (x == 0.0D && z == 0.0D) {
+                  vel = new Vector(0, 0, 0);
+               } else {
+                  vel = new Vector(x / Math.abs(x), 0.0D, z / Math.abs(z));
+               }
+
+               this.speed = m.currentSpeed;
+               if (e.getPassengers().size() > 0) {
+                  vel = vel.multiply(4);
+                  vel = vel.divide(new Vector(3, 3, 3));
+               }
+
+               e.setVelocity(vel.multiply(this.speed));
+            } else {
+               m.getGroup().destroy();
+            }
+
+         }
+      });
+      this.MinecartMembers.values().forEach((m) -> {
+         if (m.spawned) {
+            if (this.validate(m)) {
+               Minecart e = m.getEntity();
+               MinecartGroup g = m.getGroup();
+               if (!g.canProceed) {
+                  return;
+               }
+
+               Location l = e.getLocation();
+               m._targetSpeed = g.head()._targetSpeed;
+               m.currentSpeed = g.head().currentSpeed;
+               MinecartMember nextCart = m.nextCart();
+               if (nextCart == null || nextCart.getEntity() == null) {
+                  return;
+               }
+
+               m._mod = l.distance(nextCart.getLocation(true)) / 1.2D;
+               if (m.currentSpeed < 0.05D) {
+                  m.currentSpeed = 0.0D;
+               }
+
+               if (m._mod < 0.0D) {
+                  m._mod = 0.0D;
+               }
+
+               Double x = 0.0D;
+               Double z = 0.0D;
+               Location nextLoc = m.nextCart().getEntity().getLocation();
+               Double ts = g.head()._targetSpeed;
+               if ((double)Math.round(m.currentSpeed * 100.0D) < ts * 100.0D) {
+                  m.currentSpeed = m.currentSpeed + 0.05D;
+               } else if ((double)Math.round(m.currentSpeed * 100.0D) > ts * 100.0D) {
+                  m.currentSpeed = m.currentSpeed - 0.05D;
+               }
+
+               this.speed = m.currentSpeed;
+               m.setMaxSpeed(ts * m._mod);
+               Block rail = e.getLocation().subtract(0.0D, 0.0D, 0.0D).getBlock();
+               if (rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
+                  Rail rail2 = (Rail)rail.getBlockData();
+                  if (rail.getType().equals(Material.RAIL)) {
+                     m.setMaxSpeed(0.4D);
+                     g.lastCurve = rail.getLocation();
+                  } else {
+                     m.setMaxSpeed(m._targetSpeed * m._mod);
+                  }
+
+                  switch($SWITCH_TABLE$org$bukkit$block$data$Rail$Shape()[rail2.getShape().ordinal()]) {
+                  case 1:
+                     x = 0.0D;
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z > 0.0D) {
+                        m.facing = BlockFace.SOUTH;
+                     } else {
+                        m.facing = BlockFace.NORTH;
+                     }
+                     break;
+                  case 2:
+                     x = nextLoc.getX() - l.getX();
+                     if (x > 0.0D) {
+                        m.facing = BlockFace.EAST;
+                     } else {
+                        m.facing = BlockFace.WEST;
+                     }
+
+                     z = 0.0D;
+                     break;
+                  case 3:
+                     x = nextLoc.getX() - l.getX();
+                     z = 0.0D;
+                     m.facing = BlockFace.EAST;
+                     break;
+                  case 4:
+                     x = nextLoc.getX() - l.getX();
+                     z = 0.0D;
+                     m.facing = BlockFace.WEST;
+                     break;
+                  case 5:
+                     x = 0.0D;
+                     z = nextLoc.getZ() - l.getZ();
+                     m.facing = BlockFace.NORTH;
+                     break;
+                  case 6:
+                     x = 0.0D;
+                     z = nextLoc.getZ() - l.getZ();
+                     m.facing = BlockFace.SOUTH;
+                     break;
+                  case 7:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z > 0.0D) {
+                        m.facing = BlockFace.SOUTH;
+                     } else {
+                        m.facing = BlockFace.EAST;
+                     }
+                     break;
+                  case 8:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z > 0.0D) {
+                        m.facing = BlockFace.SOUTH;
+                     } else {
+                        m.facing = BlockFace.WEST;
+                     }
+                     break;
+                  case 9:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z < 0.0D) {
+                        m.facing = BlockFace.NORTH;
+                     } else {
+                        m.facing = BlockFace.WEST;
+                     }
+                     break;
+                  case 10:
+                     x = nextLoc.getX() - l.getX();
+                     z = nextLoc.getZ() - l.getZ();
+                     if (z < 0.0D) {
+                        m.facing = BlockFace.NORTH;
+                     } else {
+                        m.facing = BlockFace.EAST;
+                     }
+                  }
+               }
+
+               Vector vel;
+               if (x == 0.0D && z != 0.0D) {
+                  vel = new Vector(0.0D, 0.0D, z / Math.abs(z));
+               } else if (z == 0.0D && x != 0.0D) {
+                  vel = new Vector(x / Math.abs(x), 0.0D, 0.0D);
+               } else {
+                  if (x == 0.0D && z == 0.0D) {
+                     new Vector(0, 0, 0);
+                     return;
+                  }
+
+                  vel = new Vector(x / Math.abs(x), 0.0D, z / Math.abs(z));
+               }
+
+               this.speed = g.head().currentSpeed;
+               if (this.speed % 0.05D > 0.0D) {
+                  this.speed = this.speed - this.speed % 0.05D;
+               }
+
+               if (this.speed < 0.05D) {
+                  this.speed = 0.0D;
+               }
+
+               if (e.getPassengers().size() > 0) {
+                  vel = vel.multiply(4);
+                  vel = vel.divide(new Vector(3, 3, 3));
+               }
+
+               e.setVelocity(vel.multiply(m._mod * this.speed));
+            } else {
+               m.getGroup().destroy();
+            }
+
+         }
+      });
+   }
+
+   // $FF: synthetic method
+   static int[] $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape() {
+      int[] var10000 = $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape;
+      if (var10000 != null) {
+         return var10000;
+      } else {
+         int[] var0 = new int[Shape.values().length];
+
+         try {
+            var0[Shape.ASCENDING_EAST.ordinal()] = 3;
+         } catch (NoSuchFieldError var10) {
+         }
+
+         try {
+            var0[Shape.ASCENDING_NORTH.ordinal()] = 5;
+         } catch (NoSuchFieldError var9) {
+         }
+
+         try {
+            var0[Shape.ASCENDING_SOUTH.ordinal()] = 6;
+         } catch (NoSuchFieldError var8) {
+         }
+
+         try {
+            var0[Shape.ASCENDING_WEST.ordinal()] = 4;
+         } catch (NoSuchFieldError var7) {
+         }
+
+         try {
+            var0[Shape.EAST_WEST.ordinal()] = 2;
+         } catch (NoSuchFieldError var6) {
+         }
+
+         try {
+            var0[Shape.NORTH_EAST.ordinal()] = 10;
+         } catch (NoSuchFieldError var5) {
+         }
+
+         try {
+            var0[Shape.NORTH_SOUTH.ordinal()] = 1;
+         } catch (NoSuchFieldError var4) {
+         }
+
+         try {
+            var0[Shape.NORTH_WEST.ordinal()] = 9;
+         } catch (NoSuchFieldError var3) {
+         }
+
+         try {
+            var0[Shape.SOUTH_EAST.ordinal()] = 7;
+         } catch (NoSuchFieldError var2) {
+         }
+
+         try {
+            var0[Shape.SOUTH_WEST.ordinal()] = 8;
+         } catch (NoSuchFieldError var1) {
+         }
+
+         $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape = var0;
+         return var0;
+      }
+   }
 }

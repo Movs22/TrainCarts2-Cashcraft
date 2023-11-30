@@ -1,53 +1,44 @@
 package com.movies22.cashcraft.tc.signactions;
 
-import java.util.logging.Level;
-
-import org.bukkit.entity.Player;
-
-import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.utils.Guides;
-
 import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.ClickEvent.Action;
+import org.bukkit.entity.Player;
 
 public class SignActionSpeed extends SignAction {
-	public Double speed = 0.0;
-	public Boolean execute(MinecartGroup group) {
-		/*Double i = Double.parseDouble(this.sign.getLine(0).split("t:speed ")[1]);
-		group.setTargetSpeed(i);*/
-    	return true;
-    }
-	
-	@Override
-	public Boolean match(String s) {
-    	return s.toLowerCase().equals("t:speed");
-    }
-	
-	@Override
-	public void postParse() {
-		String[] a = this.content.split(" ");
-		this.speed = Double.valueOf(a[1]);
-	}
-	
-	@Override
-	public String getAction() {
-		return "SignActionSpeed";
-    }
-	
-	@Override
-	public Double getSpeedLimit(MinecartGroup group) {
-		return this.speed;
-    }
-	
-	@Override
-	public void handleBuild(Player p) {
-		TextComponent m1 = new TextComponent(ChatColor.YELLOW + "You've built a ");
-		TextComponent clickable = new TextComponent(ChatColor.BLUE + "" + ChatColor.UNDERLINE + "SPEED");
-		TextComponent m2 = new TextComponent(ChatColor.YELLOW + " sign.");
-		TextComponent m3 = new TextComponent(ChatColor.GREEN + "\nUse this sign to change the train's speed.");
-		clickable.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Guides.GUIDE_LINK.id + Guides.SPEED_SIGN.id));
-		p.spigot().sendMessage(m1, clickable, m2, m3);
-	}
+   public Double speed = 0.0D;
+
+   public Boolean execute(MinecartGroup group) {
+      return true;
+   }
+
+   public Boolean match(String s) {
+      return s.toLowerCase().equals("t:speed");
+   }
+
+   public void postParse() {
+      String[] a = this.content.split(" ");
+      this.speed = Double.valueOf(a[1]);
+   }
+
+   public String getAction() {
+      return "SignActionSpeed";
+   }
+
+   public Double getSpeedLimit(MinecartGroup group) {
+      return this.speed;
+   }
+
+   public void handleBuild(Player p) {
+      TextComponent m1 = new TextComponent(ChatColor.YELLOW + "You've built a ");
+      TextComponent clickable = new TextComponent("" + ChatColor.BLUE + ChatColor.UNDERLINE + "SPEED");
+      TextComponent m2 = new TextComponent(ChatColor.YELLOW + " sign.");
+      TextComponent m3 = new TextComponent(ChatColor.GREEN + "\nUse this sign to change the train's speed.");
+      clickable.setClickEvent(new ClickEvent(Action.OPEN_URL, Guides.GUIDE_LINK.id + Guides.SPEED_SIGN.id));
+      p.spigot().sendMessage(new BaseComponent[]{m1, clickable, m2, m3});
+   }
 }
