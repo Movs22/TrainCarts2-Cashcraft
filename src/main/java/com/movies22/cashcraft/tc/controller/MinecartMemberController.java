@@ -25,8 +25,6 @@ public class MinecartMemberController extends BaseController {
    private ConcurrentHashMap<UUID, MinecartMember> MinecartHeadMembers = new ConcurrentHashMap();
    private Double speed;
    Boolean b = false;
-   // $FF: synthetic field
-   private static volatile int[] $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape;
 
    public void addMember(MinecartMember m) {
       this.addMember(m.getEntity().getUniqueId(), m);
@@ -259,14 +257,14 @@ public class MinecartMemberController extends BaseController {
 
                if (rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
                   Rail rail2 = (Rail)rail.getBlockData();
-                  if (!rail.getType().equals(Material.RAIL) && !rail2.getShape().name().contains("ASCENDING")) {
+                  if (!rail.getType().equals(Material.RAIL) /*&& !rail2.getShape().name().contains("ASCENDING")*/) {
                      m.setMaxSpeed(m._targetSpeed * m._mod);
                   } else {
                      m.setMaxSpeed(0.4D);
                      g.lastCurve = rail.getLocation();
                   }
 
-                  switch($SWITCH_TABLE$org$bukkit$block$data$Rail$Shape()[rail2.getShape().ordinal()]) {
+                  switch(rail2.getShape().ordinal()) {
                   case 1:
                      x = 0.0D;
                      z = nextLoc.getZ() - l.getZ();
@@ -416,7 +414,7 @@ public class MinecartMemberController extends BaseController {
                      m.setMaxSpeed(m._targetSpeed * m._mod);
                   }
 
-                  switch($SWITCH_TABLE$org$bukkit$block$data$Rail$Shape()[rail2.getShape().ordinal()]) {
+                  switch(rail2.getShape().ordinal()) {
                   case 1:
                      x = 0.0D;
                      z = nextLoc.getZ() - l.getZ();
@@ -529,68 +527,5 @@ public class MinecartMemberController extends BaseController {
 
          }
       });
-   }
-
-   // $FF: synthetic method
-   static int[] $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape() {
-      int[] var10000 = $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape;
-      if (var10000 != null) {
-         return var10000;
-      } else {
-         int[] var0 = new int[Shape.values().length];
-
-         try {
-            var0[Shape.ASCENDING_EAST.ordinal()] = 3;
-         } catch (NoSuchFieldError var10) {
-         }
-
-         try {
-            var0[Shape.ASCENDING_NORTH.ordinal()] = 5;
-         } catch (NoSuchFieldError var9) {
-         }
-
-         try {
-            var0[Shape.ASCENDING_SOUTH.ordinal()] = 6;
-         } catch (NoSuchFieldError var8) {
-         }
-
-         try {
-            var0[Shape.ASCENDING_WEST.ordinal()] = 4;
-         } catch (NoSuchFieldError var7) {
-         }
-
-         try {
-            var0[Shape.EAST_WEST.ordinal()] = 2;
-         } catch (NoSuchFieldError var6) {
-         }
-
-         try {
-            var0[Shape.NORTH_EAST.ordinal()] = 10;
-         } catch (NoSuchFieldError var5) {
-         }
-
-         try {
-            var0[Shape.NORTH_SOUTH.ordinal()] = 1;
-         } catch (NoSuchFieldError var4) {
-         }
-
-         try {
-            var0[Shape.NORTH_WEST.ordinal()] = 9;
-         } catch (NoSuchFieldError var3) {
-         }
-
-         try {
-            var0[Shape.SOUTH_EAST.ordinal()] = 7;
-         } catch (NoSuchFieldError var2) {
-         }
-
-         try {
-            var0[Shape.SOUTH_WEST.ordinal()] = 8;
-         } catch (NoSuchFieldError var1) {
-         }
-
-         $SWITCH_TABLE$org$bukkit$block$data$Rail$Shape = var0;
-         return var0;
-      }
    }
 }
