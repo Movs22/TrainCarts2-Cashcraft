@@ -399,7 +399,7 @@ public class MinecartMemberController extends BaseController {
 				if (nextCart == null || nextCart.getEntity() == null) {
 					return;
 				}
-				m._mod = l.distance(nextCart.getEntity().getLocation()) / 1.5;
+				m._mod = l.distance(nextCart.getEntity().getLocation()) / 1.2;
 
 
 				if (m.currentSpeed < 0.05) {
@@ -439,6 +439,11 @@ public class MinecartMemberController extends BaseController {
 				Block rail = e.getLocation().subtract(0,  0, 0).getBlock();
 				if(rail.getType().equals(Material.POWERED_RAIL) || rail.getType().equals(Material.RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
+					if(rail.getType().equals(Material.RAIL) || rail2.getShape().name().contains("ASCENDING")) {
+						g.head()._targetSpeed = 0.4d;
+						m.getEntity().setMaxSpeed(0.4d);
+						g.lastCurve = rail.getLocation();
+					}
 					switch(rail2.getShape()) {
 					case EAST_WEST:
 						x = nextLoc.getX() - l.getX();

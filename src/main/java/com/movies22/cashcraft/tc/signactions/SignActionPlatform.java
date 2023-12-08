@@ -14,11 +14,8 @@ import org.bukkit.block.data.type.Jigsaw.Orientation;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import com.bergerkiller.bukkit.common.Task;
-import com.bergerkiller.bukkit.sl.API.Variables;
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
-import com.movies22.cashcraft.tc.api.MinecartMember;
 import com.movies22.cashcraft.tc.api.Station;
 import com.movies22.cashcraft.tc.controller.PisController;
 import com.movies22.cashcraft.tc.utils.Guides;
@@ -131,7 +128,7 @@ public class SignActionPlatform extends SignAction {
 			ann.add(StationAnnouncements.parseMetro(this.station.osi, group.getLine()));
 		}
 		if(this.station.hosi != null && !this.station.hosi.equals("")) {
-			ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 2)));
+			ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 1)));
 		}
 		if(this.station.station != "") {
 			String s = this.station.generateConnection(group.getLine());
@@ -295,7 +292,7 @@ public class SignActionPlatform extends SignAction {
 		this.doors = Integer.valueOf(a[5]);
 		Location z = this.sign.getBlock().getLocation().clone();
 		Vector addition2 = addition.clone().divide(new Vector(3, 3, 3));
-		Location light = z.subtract(offset).add(0, 2, 0);
+		Location light = z.add(offset).subtract(0, 2, 0);
 		if(light.getBlock().getType().equals(Material.JIGSAW) || light.getBlock().getType().equals(Material.PUMPKIN) || light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT) || light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
 			doorLocs = new ArrayList<Location>();
 			lightLocs = new ArrayList<Location>();
@@ -327,7 +324,7 @@ public class SignActionPlatform extends SignAction {
 			});
 			return;
 		} 
-		light.add(offset).add(offset).subtract(0,  2,  0);
+		light.subtract(offset).subtract(offset).add(0,  2,  0);
 		if(light.getBlock().getType().equals(Material.JIGSAW) || light.getBlock().getType().equals(Material.PUMPKIN) || light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT) || light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
 			doorLocs = new ArrayList<Location>();
 			lightLocs = new ArrayList<Location>();
