@@ -15,6 +15,7 @@ import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 
 import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -42,7 +43,7 @@ public class TCListener implements Listener {
         }
     }
 	
-	//Plaer disconnect
+	//Player disconnect
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerQuit(PlayerQuitEvent event) {
 		Player p = (Player) event.getPlayer();
@@ -57,9 +58,11 @@ public class TCListener implements Listener {
 	}
 	
 	//MINECART collision (Cancelled if TC entity)
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
-    	event.setCancelled(true);
+		if(TrainCarts.plugin.MemberController.getFromEntity(event.getVehicle()) != null) {
+    		event.setCancelled(true);
+		}
     }
 	
     //Sign right click (Convert to node if TC)
@@ -83,15 +86,49 @@ public class TCListener implements Listener {
                 	TextComponent header = new TextComponent(ChatColor.WHITE + "" + ChatColor.BOLD + "= Destinations from " + b.getLocationStr() + " =\n");
     				msg = append(msg, header);
     				b.connections.forEach(con -> {
-    					TextComponent connection = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + con.facing + ChatColor.GREEN + " >> " + ChatColor.BOLD + "" + ChatColor.WHITE + con.opositeFacing + ChatColor.GREEN + " - " + ChatColor.YELLOW + con.getEndNode().getLocationStr());
+    					TextComponent connection = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + con.facing + ChatColor.GREEN + " >> " + ChatColor.BOLD + "" + ChatColor.WHITE + con.opositeFacing + ChatColor.GREEN + " - " + ChatColor.YELLOW + con.getEndNode().getLocationStr() + "\n");
         				msg = append(msg, connection);
     				});
     				e.getPlayer().spigot().sendMessage(msg);
             		e.setCancelled(true);
             		return;
             	}
+				if(e.getItem().getType().equals(Material.COMMAND_BLOCK)) {
+					Sign sign = (Sign) e.getClickedBlock().getState();
+            		MetroLine a = TrainCarts.plugin.lines.getLine("#GLOBAL");
+                	PathNode b = a.getNode(sign.getLocation().clone().add(0.5, 2, 0.5));
+                	if(b == null) {
+                		e.getPlayer().sendMessage(ChatColor.RED + "Node is invalid!");
+                		e.setCancelled(true);
+                		return;
+                	}
+					if(b.getAction() instanceof SignActionPlatform) {
+						SignActionPlatform c = (SignActionPlatform) b.getAction();
+						TextComponent header = new TextComponent(ChatColor.WHITE + "" + ChatColor.BOLD + "= Config of plat " + c.station.code + "~" + c.platform + " =\n");
+    					msg = append(msg, header);
+    					TextComponent doors = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + "# of doors " + ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + c.doorLocs.size() + "\n " + ChatColor.GREEN + "- " + ChatColor.BOLD + "" + ChatColor.WHITE + "Door locs:" + "\n");
+        				msg = append(msg, doors);
+						c.doorLocs.forEach(con -> {
+							TextComponent connection = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + con.getX() + ChatColor.GREEN + "/" + ChatColor.BOLD + "" + ChatColor.WHITE + con.getY() + ChatColor.GREEN + "/" +ChatColor.BOLD + "" + ChatColor.WHITE  + con.getZ() + "\n");
+							msg = append(msg, connection);
+						});
+						TextComponent lights = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + "# of lights " + ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + c.doorLocs.size() + "\n " + ChatColor.GREEN + "- " + ChatColor.BOLD + "" + ChatColor.WHITE + "Light locs:" + "\n");
+        				msg = append(msg, lights);
+						c.lightLocs.forEach(con -> {
+							TextComponent connection = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + con.getX() + ChatColor.GREEN + "/" + ChatColor.BOLD + "" + ChatColor.WHITE + con.getY() + ChatColor.GREEN + "/" +ChatColor.BOLD + "" + ChatColor.WHITE  + con.getZ() + "\n");
+							msg = append(msg, connection);
+						});
+    					e.getPlayer().spigot().sendMessage(msg);
+            			e.setCancelled(true);
+					} else {
+						e.getPlayer().sendMessage(ChatColor.RED + "Node is invalid!");
+                		e.setCancelled(true);
+                		return;
+					}
+					return;
+				}
                 Sign sign = (Sign) e.getClickedBlock().getState();
-                if(sign.getLine(0).startsWith("t:") && (p.hasPermission("traincarts.build") || p.isOp())) {
+                if(sign.getLine(0).startsWith("t:") && (p.hasPermission("tc2.build") || p.isOp())) {
                 	TrainCarts.plugin.SignStore.addSign(sign);
                 	MetroLine a = TrainCarts.plugin.lines.getLine("#GLOBAL");
                 	PathNode b = a.createNode(sign.getLocation().clone().add(0.5, 2, 0.5));

@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Timer;
@@ -12,6 +13,7 @@ import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Rail;
@@ -38,6 +40,7 @@ import com.movies22.cashcraft.tc.controller.PlayerController;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.webserver.MainServer;
 import com.movies22.cashcraft.tc.webserver.ServerThread;
+import com.movies22.cashcraft.tc.offline.*;
 
 public class TrainCarts extends PluginBase {
 	public static TrainCarts plugin;
@@ -52,9 +55,10 @@ public class TrainCarts extends PluginBase {
 	public MetroLine global = null; 
 	public MainServer server;
 	public ServerThread serverThread;
-	
-	public String version = "2.0";
-	public String mcVersion = "1.20.1";
+	public HashMap<World, OfflineWorld> offlineWorlds;
+
+	public String version = "2.1";
+	public String mcVersion = "1.20.2";
 	public String author = "Movies22";
 	@Override
 	public int getMinimumLibVersion() {
@@ -74,6 +78,8 @@ public class TrainCarts extends PluginBase {
 	
 	@Override
 	public void enable() {
+		World w = getServer().getWorld("Main1");
+		offlineWorlds.put(w, new OfflineWorld(w));
 		plugin.getLogger().log(Level.INFO, "Enabling TrainCarts...");
 		SignAction.init();
 		this.lines = new MetroLines();
@@ -107,7 +113,7 @@ public class TrainCarts extends PluginBase {
 					}
 				}
 				if (l.length > 5) {
-					ss.setOsi(l[5], false);
+					ss.setOsi("" /*l[5]*/, false);
 				}
 				if (l.length > 6) {
 					ss.setOsi(l[6], true);
@@ -312,7 +318,7 @@ public class TrainCarts extends PluginBase {
 		            	PisController.doFixedTick();
 		            }
 		        }, 
-		        1000L, 2000L
+		        1000L, 1000L
 		);
 		
 		this.server = new MainServer();
@@ -352,7 +358,7 @@ public class TrainCarts extends PluginBase {
 			}
 		};
 		spawnerTask.start(100L, 20L);
-		memberMove.start(100L, 5L);
+		memberMove.start(100L, 2L);
 		memberLoad.start(100L, 100L);
 		playerUpdateTask.start(100L, 20L);
 		

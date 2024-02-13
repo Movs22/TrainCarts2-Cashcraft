@@ -32,3 +32,5 @@ target/*
 hs_err_pid*
 replay_pid*
 /bin/
+/.apt_generated/
+/target/

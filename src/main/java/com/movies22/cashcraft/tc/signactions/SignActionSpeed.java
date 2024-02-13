@@ -1,10 +1,7 @@
 package com.movies22.cashcraft.tc.signactions;
 
-import java.util.logging.Level;
-
 import org.bukkit.entity.Player;
 
-import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.utils.Guides;
 
@@ -15,8 +12,11 @@ import net.md_5.bungee.api.chat.TextComponent;
 public class SignActionSpeed extends SignAction {
 	public Double speed = 0.0;
 	public Boolean execute(MinecartGroup group) {
-		/*Double i = Double.parseDouble(this.sign.getLine(0).split("t:speed ")[1]);
-		group.setTargetSpeed(i);*/
+		group.getMembers().forEach(m -> {
+			if(!m.virtualized || m.index == 0) {
+				m.getEntity().setMaxSpeed(this.getSpeedLimit(group));
+			}
+		});
     	return true;
     }
 	

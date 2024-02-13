@@ -93,8 +93,8 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		this.group = group;
 	}
 
-	public Minecart getEntity() {
-		return (Minecart) this.entity.getEntity();
+	public VirtualMinecart getEntity() {
+		return (VirtualMinecart) this.entity;
 	}
 
 	public void setEntity(VirtualMinecart e) {
@@ -102,7 +102,7 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	}
 
 	public MinecartMember nextCart() {
-		int nc = this.group.getMembers().indexOf(this);
+		int nc = this.index;
 		if (nc < 1 || nc > (this.group.getMembers().size() - 1))
 			return null;
 		return this.group.getMember(nc - 1);
@@ -234,7 +234,7 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	public Boolean virtualize() {
 		this.virtualized = true;
 		this.getEntity().remove();
-		this.entity.setVirtualized(true);
+		this.getEntity().setVirtualized(true);
 		return true;
 	}
 
@@ -245,8 +245,9 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		return this.load(false);
 	}
 
-	public Boolean load(Boolean b) {
-		this.entity.load(false);
+	public Boolean load(Boolean offset) {
+		TrainCarts.plugin.MemberController.removeMember(this);
+		this.getEntity().load(offset);
 		this.virtualized = false;
 		TrainCarts.plugin.MemberController.addMember(this.getEntity().getUniqueId(), this);
 		return true;

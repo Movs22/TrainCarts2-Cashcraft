@@ -4,7 +4,7 @@
 
     <groupId>com.movies22.cashcraft</groupId>
     <artifactId>TrainCarts2</artifactId>
-    <version>1.20.1</version>
+    <version>1.20.2</version>
     <packaging>jar</packaging>
 
     <name>TrainCarts2</name>
@@ -12,8 +12,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.number>NO-CI</project.build.number>
-        <project.serverVersion>1.20.1-R0.1-SNAPSHOT</project.serverVersion>
-        <project.bkcversion>1.20.1-v1-SNAPSHOT</project.bkcversion>
+        <project.serverVersion>1.20.2-R0.1-SNAPSHOT</project.serverVersion>
+        <project.bkcversion>1.20.2-v1-SNAPSHOT</project.bkcversion>
         <project.slversion>1.11.2-v2-SNAPSHOT</project.slversion>
         <project.mwversion>1.11.2-v2-SNAPSHOT</project.mwversion>
         <project.preloaderversion>1.8</project.preloaderversion>
@@ -95,7 +95,7 @@
         <dependency>
             <groupId>com.bergerkiller.bukkit</groupId>
             <artifactId>SignLink</artifactId>
-            <version>1.20.1-v1</version>
+            <version>1.20.2-v1</version>
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>

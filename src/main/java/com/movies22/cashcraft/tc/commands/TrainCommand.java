@@ -228,6 +228,7 @@ public class TrainCommand implements CommandExecutor {
 			
 			sender.sendMessage(ChatColor.YELLOW + "This train will stop at §a" + st + "§e.");
 			sender.sendMessage(ChatColor.YELLOW + "This train will be next at §a" + g.head().getNextNode().getLocationStr() + "§e.");
+			sender.sendMessage(ChatColor.YELLOW + "This train is currently at §a" + g.head().getLocation().getX() + "/" + g.head().getLocation().getY() + "/" + g.head().getLocation().getZ() + "§e.");
 			return true;
 		} else if (args[0].equals("speed")) {
 			if(!(sender instanceof Player)) {

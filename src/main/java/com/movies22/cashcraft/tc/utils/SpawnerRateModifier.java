@@ -3,9 +3,6 @@ package com.movies22.cashcraft.tc.utils;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.logging.Level;
-
-import com.movies22.cashcraft.tc.TrainCarts;
 
 public class SpawnerRateModifier {
 	/*
@@ -45,9 +42,9 @@ public class SpawnerRateModifier {
 			close = (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
 					.parse(n.getYear() + "/" + n.getMonthValue() + "/" + (n.getDayOfMonth() + 1 + dc) + " 01:00:00"))
 					.getTime();
-			/*extra = (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+			extra = (new SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
 					.parse(n.getYear() + "/" + n.getMonthValue() + "/" + (n.getDayOfMonth() + 1 + dc) + " 03:55:00"))
-					.getTime();*/
+					.getTime();
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -55,13 +52,13 @@ public class SpawnerRateModifier {
 
 	public enum SpawnRateMod {
 		EARLY_NIGHT(open, m1, 0.250000),
-		EARLY_MORNING(m1, m2, 0.500000), 
+		EARLY_MORNING(m1, m2, 0.50000), 
 		MORNING(m2, m3, 1.000000), 
-		NOON(m3, m4, 0.500000), 
+		NOON(m3, m4, 0.5), 
 		AFTERNOON(m4, m5, 1.000000),
-		EVENING(m5, m6, 0.5000000), 
-		LATE_NIGHT(m6, close, 0.250000),
-		//EXTRA(close, extra, 1),
+		EVENING(m5, m6, 0.5), 
+		LATE_NIGHT(m6, close, 1.00),
+		EXTRA(close, extra, 1.00),
 		DEFAULT(-1, -1, 0.000000);
 		public long _start = 0;
 		public long _end = 0;

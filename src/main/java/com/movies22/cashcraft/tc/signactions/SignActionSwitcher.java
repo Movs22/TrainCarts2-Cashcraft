@@ -62,6 +62,7 @@ public class SignActionSwitcher extends SignAction {
 			}
 		}
 		if(a instanceof Rail.Shape) {
+			group.head().facing = s.getOppositeFace();
 			this.node.rail.setShape(a);
 			this.node.loc.getBlock().setBlockData(this.node.rail);
 			this.node.loc.getBlock().getState().update();

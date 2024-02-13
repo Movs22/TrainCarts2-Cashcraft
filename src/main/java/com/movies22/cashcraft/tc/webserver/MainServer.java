@@ -8,6 +8,7 @@ import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines;
 import com.movies22.cashcraft.tc.api.MinecartMember;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+import com.movies22.cashcraft.tc.controller.PisController.PIS;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.api.Station;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
@@ -58,14 +59,14 @@ public class MainServer {
 			plat = plat + "\"" + p + "\"";
 			i++;
 		}
-		/*for(SignActionPlatform p2 : s.platforms.values()) {
+		for(SignActionPlatform p2 : s.platforms.values()) {
 			for(PIS pis : p2.pis.values()) {
 				if(x > pis.delay) {
 					x = pis.delay;
 					x2 = pis.name.charAt(-1);
 				}
 			};
-		}*/
+		}
 		plat = plat + "]";
 		return "{\"name\":\"" + s.name + "\",\"code\":\"" + s.code + "\",\"lines\":" + getOsi(s.osi) + ", \"platforms\":" + plat + ", \"nextTrain\":" + x + ", \"nextTrainChar\":\"" + String.valueOf(x2) + "\"}";
 	}
@@ -79,7 +80,7 @@ public class MainServer {
 			i++;
 		}
 		stops = stops + "]";
-		return "{\"headcode\":\"" + s.getHeadcode() + "\",\"length\":\"" + s._getLength() + "\",\"route\":\"" + s.currentRoute._line.getName() + ":" + s.currentRoute.name + "\", \"nextService\":" + s.nextTrain + ", \"stops\":" + stops +"\"virtualized\":" + s.virtualized + "}";
+		return "{\"headcode\":\"" + s.getHeadcode() + "\",\"length\":\"" + s._getLength() + "\",\"route\":\"" + s.currentRoute._line.getName() + ":" + s.currentRoute.name + "\", \"nextService\":" + s.nextTrain + ", \"stops\":" + stops +", \"virtualized\":" + s.virtualized + ", \"location\": \"" + s.head().getLocation().getBlockX() + "/" + s.head().getLocation().getBlockZ() + "\", \"vec\": \"" + s.head().getEntity().getVelocity().getX() + "/" + s.head().getEntity().getVelocity().getZ()  + "\"}";
 	}
 	
 	public String getLineInfo(MetroLine s) {
@@ -96,18 +97,23 @@ public class MainServer {
 	
 	public String getRouteInfo(PathRoute s) {
 		String stops = "[";
+		String stopsR = "[";
 		stops = stops + "\"" + ((SignActionPlatform) s._start.getAction()).station.name + "~" + ((SignActionPlatform) s._start.getAction()).platform + "\"";
+		stopsR = stopsR + "\"" + (s._start.getAction()).node.loc.getBlockX() + "/" + (s._start.getAction()).node.loc.getBlockZ() + "\"";
 		for(SignActionPlatform p : s.stops) {
 			stops = stops + ", ";
 			stops = stops + "\"" + p.station.name + "~" + p.platform + "\"";
+			stopsR = stopsR + ", ";
+			stopsR = stopsR + "\"" + p.node.loc.getBlockX() + "/" + p.node.loc.getBlockZ() + "\"";
 		}
 		stops = stops + "]";
-		return "{\"name\":\"" + s.name + "\",\"line\":\"" + s._line.getName() + "\",\"reverse\":\"" + s.reverse + "\", \"stops\":" + stops + "}";
+		return "{\"name\":\"" + s.name + "\",\"line\":\"" + s._line.getName() + "\",\"reverse\":\"" + s.reverse + "\", \"stops\":" + stops + ", \"stopsLoc\":" + stopsR+ "}";
 	}
 	
 	
 	public void enable() {
 		this.app = new Express();
+
 		this.app.get("/", (req, res) -> {
 			res.send("{\"version\":\"" + tc.version + "\", \"mcVersion\":\"" + tc.mcVersion + "\"}");
 		});
@@ -184,6 +190,7 @@ public class MainServer {
 			}
 			res.send(getTrainInfo(g));
 		});
+
 
 		this.app.listen(25566);
 	

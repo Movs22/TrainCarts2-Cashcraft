@@ -25,7 +25,6 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
-
 public class SignActionPlatform extends SignAction {
 	public String platform = null;
 	public String name;
@@ -39,8 +38,8 @@ public class SignActionPlatform extends SignAction {
 	public boolean inverted = false;
 	private Character headcode;
 	public boolean reverse = false;
-	public HashMap<Character, PisController.PIS> pis = new HashMap<Character,PisController.PIS>();
-	
+	public HashMap<Character, PisController.PIS> pis = new HashMap<Character, PisController.PIS>();
+
 	@Override
 	public SignActionPlatform clone() {
 		SignActionPlatform a = new SignActionPlatform();
@@ -56,56 +55,60 @@ public class SignActionPlatform extends SignAction {
 		a.inverted = false;
 		a.headcode = null;
 		a.reverse = false;
-		a.pis = new HashMap<Character,PisController.PIS>();
-		return a;	
+		a.pis = new HashMap<Character, PisController.PIS>();
+		return a;
 	}
-	
+
 	public void setLights(Material light) {
 		this.lightLocs.forEach(loc -> {
 			loc.getBlock().setType(light);
 		});
-		if(light.equals(Material.VERDANT_FROGLIGHT)) {
+		if (light.equals(Material.VERDANT_FROGLIGHT)) {
 			this.doorLocs.forEach(loc -> {
 				loc.clone().subtract(0, 1, 0).getBlock().setType(Material.REDSTONE_TORCH);
 			});
-		} else if(light.equals(Material.PEARLESCENT_FROGLIGHT)) {
+		} else if (light.equals(Material.PEARLESCENT_FROGLIGHT)) {
 			this.doorLocs.forEach(loc -> {
 				loc.clone().subtract(0, 1, 0).getBlock().setType(Material.AIR);
 			});
 		}
 	}
+
 	SignActionPlatform b;
 	public Timer groupAnnounceTask;
 	int stops = 0;
-	
+
 	public Boolean execute(MinecartGroup group) {
 		b = null;
-		if(this.station.closed) {
+		if (this.station.closed) {
 			group.currentRoute.stops.remove(0);
 			return true;
 		}
-		if(group.currentRoute.stops.size() > 0 && group.currentRoute.stops.get(0).equals(this)) {
+		group.head().facing = this.node.direction;
+		if (group.currentRoute.stops.size() > 0 && group.currentRoute.stops.get(0).equals(this)) {
+			group.canProceed = false;
 			stops = group.currentRoute.stops.size();
-			if(group.currentRoute.stops.size() <= 1) {
-				if(this.reverse) {
-					group.head().facing = this.node.direction.getOppositeFace(); 
+			group.prevTS = group.head()._targetSpeed;
+			if (group.currentRoute.stops.size() <= 1) {
+				if (this.reverse) {
 					group.unVirtualize(true);
 					group.loadNextRoute(false, true);
 					group.reverse();
 					group.getMembers().forEach(m -> {
 						m.proceedTo(this.node.getLocation());
 					});
+					group.head().facing = this.node.direction.getOppositeFace();
 				} else {
 					group.loadNextRoute(true);
 				}
 			}
 			headcode = group.getHeadcode().charAt(1);
 			group.getMembers().forEach(m -> {
-				m.currentSpeed = 0.0;
-				m._targetSpeed = 0.0;
+				m.currentSpeed = 0.0d;
+				m._targetSpeed = 0.0d;
 			});
 			PisController.PIS pis;
-			if(this.pis.get(headcode) != null) {
+			if (this.pis.get(headcode) != null) {
 				pis = this.pis.get(headcode);
 			} else {
 				pis = TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode);
@@ -113,288 +116,304 @@ public class SignActionPlatform extends SignAction {
 			}
 			long dur = this.duration;
 			pis.setArrived(true);
-			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode).addTimer(group.nextTrain);
+			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode)
+					.addTimer(group.nextTrain);
 			pis.delay = 0;
 			pis = null;
-		n = group.currentRoute.name;
-		if(!group.virtualized) {
-			this.setLights(Material.VERDANT_FROGLIGHT);
-		}
-		if(!group.virtualized) { 
-		List<String> ann = new ArrayList<String>();
-		String c = group.getLine().getChar();
-		ann.add("This station is " + this.station.name + ".");
-		if(this.station.osi != c && this.station.osi != "" && this.station.osi.length() > 1) {
-			ann.add(StationAnnouncements.parseMetro(this.station.osi, group.getLine()));
-		}
-		if(this.station.hosi != null && !this.station.hosi.equals("")) {
-			ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 1)));
-		}
-		if(this.station.station != "") {
-			String s = this.station.generateConnection(group.getLine());
-			ann.add(s);
-		} 
-		if(stops == 1) {
-			ann.add("This train terminates here. All change please.");
-		}
-		group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
-		ann.remove(0);
-		groupAnnounceTask = new Timer();
-		groupAnnounceTask.schedule( 
-		        new java.util.TimerTask() {
-		            @Override
-		            public void run() {
-		            	if(ann.size() > 0) {
-		            		if(ann.get(0) != null) {
-		            			group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
-		            		};	 
-		            		ann.remove(0);
-		            	} else {
-		            		this.cancel();
-		            		groupAnnounceTask = null;
-		            	}
-		            }
-		        }, 
-		        2500L, 2500L
-		);
-		}
-		new java.util.Timer().schedule( 
-		        new java.util.TimerTask() {
-		            @Override
-		            public void run() {
-		            	depart(group);
-		                group.getMembers().forEach(m -> {
-		                	m._targetSpeed = 0.6;
-		                	m._mod = 1.0;
-		                });
-		            }
-		        }, 
-		        dur*1000
-		);
-    	return true;
+			n = group.currentRoute.name;
+			if (!group.virtualized) {
+				this.setLights(Material.VERDANT_FROGLIGHT);
+				List<String> ann = new ArrayList<String>();
+				String c = group.getLine().getChar();
+				ann.add("This station is " + this.station.name + ".");
+				if (this.station.osi != c && this.station.osi != "" && this.station.osi.length() > 1) {
+					ann.add(StationAnnouncements.parseMetro(this.station.osi, group.getLine()));
+				}
+				if (this.station.hosi != null && !this.station.hosi.equals("")) {
+					ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 1)));
+				}
+				/*if (this.station.station != "") {
+					String s = this.station.generateConnection(group.getLine());
+					ann.add(s);
+				}*/
+				if (stops == 1 && !group.getHeadcode().startsWith("0")) {
+					ann.add("This train terminates here. All change please.");
+				}
+				group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
+				ann.remove(0);
+				groupAnnounceTask = new Timer();
+				groupAnnounceTask.schedule(
+						new java.util.TimerTask() {
+							@Override
+							public void run() {
+								if (ann.size() > 0) {
+									if (ann.get(0) != null) {
+										group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
+									}
+									;
+									ann.remove(0);
+								} else {
+									this.cancel();
+									groupAnnounceTask = null;
+								}
+							}
+						},
+						2500L, 2500L);
+			}
+			new java.util.Timer().schedule(
+					new java.util.TimerTask() {
+						@Override
+						public void run() {
+							depart(group);
+							group.canProceed = true;
+							group.getMembers().forEach(m -> {
+								m._targetSpeed = group.prevTS;
+								m._mod = 1.0;
+							});
+						}
+					},
+					dur * 1000);
+			return true;
 		} else {
 			group.head().proceedTo(this.node.loc);
 			return true;
 		}
-    }
-	
+	}
+
 	public void depart(MinecartGroup g) {
-		if(g.currentRoute.stops == null || g.currentRoute == null) {
+		if (g.currentRoute.stops == null || g.currentRoute == null) {
 			return;
 		}
-		if(g.currentRoute.stops.size() > 0 && g.currentRoute.stops.get(0).equals(this)) {
+		if (g.currentRoute.stops.size() > 0 && g.currentRoute.stops.get(0).equals(this)) {
 			g.currentRoute.stops.remove(0);
 		}
-		if(TrainCarts.plugin.PisController != null) {
+		if (TrainCarts.plugin.PisController != null) {
 			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode).setArrived(false);
 		}
 		return;
 	}
+
 	public Boolean exit(MinecartGroup group) {
-		if(!group.virtualized) {
+		if (!group.virtualized) {
 			this.setLights(Material.PEARLESCENT_FROGLIGHT);
 		}
-		if(group.currentRoute.name.equals("DESPAWN")) {
+		if (group.currentRoute.name.equals("DESPAWN")) {
 			group.destroy();
 		}
-		if(!group.currentRoute._line.getName().equals("#GLOBAL") && group.currentRoute.stops.size() > 0) {
-			group.announce("This is a " + group.currentRoute._line.getName() + " Line service to " + group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
+		if (!group.currentRoute._line.getName().equals("#GLOBAL") && group.currentRoute.stops.size() > 0) {
+			group.announce("This is a " + group.currentRoute._line.getName() + " Line service to "
+					+ group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
 		} else {
 			group.eject();
 			group.destroy();
 		}
-		if(group.currentRoute == null) {
+		if (group.currentRoute == null) {
 			return false;
 		}
-		if(!group.currentRoute.name.equals("[CACHED ROUTE]")) {
+		if (!group.currentRoute.name.equals("[CACHED ROUTE]")) {
 			TimerTask t = new java.util.TimerTask() {
-	            @Override
-	            public void run() {
-	            	if(group.currentRoute.stops != null) {
-	            	if(group.currentRoute.stops.size() > 0) {
-	            		if(group.currentRoute.stops.get(0).station.closed) {
-	            			group.announce("The next station is closed.");
-	            		} else {
-	            			group.announce("The next station is " + group.currentRoute.stops.get(0).station.name + ".");
-	            		}
-	            		}
-	            	}
-	            }
-	        	};
-	        new java.util.Timer().schedule(t, 3000
-					);
-				
+				@Override
+				public void run() {
+					if (group.currentRoute.stops != null) {
+						if (group.currentRoute.stops.size() > 0) {
+							if (group.currentRoute.stops.get(0).station.closed) {
+								group.announce("The next station is closed.");
+							} else {
+								group.announce(
+										"The next station is " + group.currentRoute.stops.get(0).station.name + ".");
+							}
+						}
+					}
+				}
+			};
+			new java.util.Timer().schedule(t, 3000);
+
 		}
 		return true;
 	}
-	
+
 	@Override
 	public void postParse() {
 		try {
-		String[] a = this.content.split(" ");
-		this.platform = a[1];
-		Station b = TrainCarts.plugin.StationStore.getFromCode(a[2]);
-		if(b == null) {
-			TrainCarts.plugin.getLogger().log(Level.WARNING, this.content + " is an invalid SignActionPlatform sign.");
-			this.platform = null;
-			this.node.line.deleteNode(this.node);
-			if(this.node.line != TrainCarts.plugin.global) {
-				TrainCarts.plugin.global.deleteNode(this.node);
-			}
-			return;
-		}
-		this.station = b;
-		b.addPlatform(a[1], this);
-		try {
-			this.duration = Long.parseLong(a[3]);
-		} catch(NumberFormatException e) {
-			TrainCarts.plugin.getLogger().log(Level.WARNING, this.content + " is an invalid SignActionPlatform sign.");
-			this.platform = null;
-			this.node.line.deleteNode(this.node);
-			if(this.node.line != TrainCarts.plugin.global) {
-				TrainCarts.plugin.global.deleteNode(this.node);
-			}
-			return;
-		}
-		String[] c = a[4].split("/");
-		if(a.length > 6) {
-			if(a[6].equals("R")) {
-				this.reverse = true;
-			}
-		
-		}
-		this.offset = new Vector(Integer.valueOf(c[0]),Integer.valueOf(c[1]),Integer.valueOf(c[2]));
-		Vector offset;
-		Vector addition;
-		switch(this.node.direction) {
-		case EAST:
-			offset = new Vector(0, 1, -2);
-			addition = new Vector(3, 0, 0);
-			break;
-		case NORTH:
-			offset = new Vector(-2, 1, 0);
-			addition = new Vector(0, 0, -3);
-			break;
-		case SOUTH:
-			offset = new Vector(2, 1, 0);
-			addition = new Vector(0, 0, 3);
-			break;
-		case WEST:
-			offset = new Vector(0, 1, 2);
-			addition = new Vector(-3, 0, 0);
-			break;
-		default:
-			offset = new Vector(0, 0, 0);
-			addition = new Vector(0, 0, 0);
-			this.doors = 0;
-			break;
-		}
-		this.doors = Integer.valueOf(a[5]);
-		Location z = this.sign.getBlock().getLocation().clone();
-		Vector addition2 = addition.clone().divide(new Vector(3, 3, 3));
-		Location light = z.add(offset).subtract(0, 2, 0);
-		if(light.getBlock().getType().equals(Material.JIGSAW) || light.getBlock().getType().equals(Material.PUMPKIN) || light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT) || light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
-			doorLocs = new ArrayList<Location>();
-			lightLocs = new ArrayList<Location>();
-			lightLocs.add(light.clone().subtract(addition2));
-			for(int i = 0; i < this.doors; i++) {
-				if(light.getBlock().getType().equals(Material.JIGSAW) || light.getBlock().getType().equals(Material.PUMPKIN) || light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT) || light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
-					doorLocs.add(light.clone());
-					light.clone().subtract(0,  1,  0).getBlock().setType(Material.AIR);
-				} else {
-					break;
+			String[] a = this.content.split(" ");
+			this.platform = a[1];
+			Station b = TrainCarts.plugin.StationStore.getFromCode(a[2]);
+			if (b == null) {
+				TrainCarts.plugin.getLogger().log(Level.WARNING,
+						this.content + " is an invalid SignActionPlatform sign.");
+				this.platform = null;
+				this.node.line.deleteNode(this.node);
+				if (this.node.line != TrainCarts.plugin.global) {
+					TrainCarts.plugin.global.deleteNode(this.node);
 				}
-				light.getBlock().setType(Material.JIGSAW);
-				Jigsaw z2 = (Jigsaw) light.getBlock().getBlockData();
-				z2.setOrientation(Orientation.valueOf(this.node.direction.name() + "_UP"));
-				light.getBlock().setBlockData(z2);
-				
-				Location z3 = light.clone().add(addition2);
-				z3.getBlock().setType(Material.JIGSAW);
-				Jigsaw z4 = (Jigsaw) z3.getBlock().getBlockData();
-				z4.setOrientation(Orientation.valueOf(this.node.direction.getOppositeFace().name() + "_UP"));
-				z3.getBlock().setBlockData(z4);
-				light.add(addition);
-				light.subtract(addition2);
-				lightLocs.add(light.clone());
-				light.add(addition2);
+				return;
 			}
-			lightLocs.forEach(loc -> {
-				loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
-			});
-			return;
-		} 
-		light.subtract(offset).subtract(offset).add(0,  2,  0);
-		if(light.getBlock().getType().equals(Material.JIGSAW) || light.getBlock().getType().equals(Material.PUMPKIN) || light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT) || light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
-			doorLocs = new ArrayList<Location>();
-			lightLocs = new ArrayList<Location>();
-			lightLocs.add(light.clone().subtract(addition2));
-			for(int i = 0; i < this.doors; i++) {
-				if(light.getBlock().getType().equals(Material.JIGSAW) || light.getBlock().getType().equals(Material.PUMPKIN) || light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT) || light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
-					doorLocs.add(light.clone());
-					light.clone().subtract(0,  1,  0).getBlock().setType(Material.AIR);
-				} else {
-					break;
+			this.station = b;
+			b.addPlatform(a[1], this);
+			try {
+				this.duration = Long.parseLong(a[3]);
+			} catch (NumberFormatException e) {
+				TrainCarts.plugin.getLogger().log(Level.WARNING,
+						this.content + " is an invalid SignActionPlatform sign.");
+				this.platform = null;
+				this.node.line.deleteNode(this.node);
+				if (this.node.line != TrainCarts.plugin.global) {
+					TrainCarts.plugin.global.deleteNode(this.node);
 				}
-				light.getBlock().setType(Material.JIGSAW);
-				Jigsaw z2 = (Jigsaw) light.getBlock().getBlockData();
-				z2.setOrientation(Orientation.valueOf(this.node.direction.name() + "_UP"));
-				light.getBlock().setBlockData(z2);
-				
-				Location z3 = light.clone().add(addition2);
-				z3.getBlock().setType(Material.JIGSAW);
-				Jigsaw z4 = (Jigsaw) z3.getBlock().getBlockData();
-				z4.setOrientation(Orientation.valueOf(this.node.direction.getOppositeFace().name() + "_UP"));
-				z3.getBlock().setBlockData(z4);
-				light.add(addition);
-				light.subtract(addition2);
-				lightLocs.add(light.clone());
-				light.add(addition2);
+				return;
 			}
-			lightLocs.forEach(loc -> {
-				loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
-			});
-		
-			return;
-		}
-		} catch(IndexOutOfBoundsException e) {
+			String[] c = a[4].split("/");
+			if (a.length > 6) {
+				if (a[6].equals("R")) {
+					this.reverse = true;
+				}
+
+			}
+			this.offset = new Vector(Integer.valueOf(c[0]), Integer.valueOf(c[1]), Integer.valueOf(c[2]));
+			Vector offset;
+			Vector addition;
+			switch (this.node.direction) {
+				case EAST:
+					offset = new Vector(0, 1, -2);
+					addition = new Vector(3, 0, 0);
+					break;
+				case NORTH:
+					offset = new Vector(-2, 1, 0);
+					addition = new Vector(0, 0, -3);
+					break;
+				case SOUTH:
+					offset = new Vector(2, 1, 0);
+					addition = new Vector(0, 0, 3);
+					break;
+				case WEST:
+					offset = new Vector(0, 1, 2);
+					addition = new Vector(-3, 0, 0);
+					break;
+				default:
+					offset = new Vector(0, 0, 0);
+					addition = new Vector(0, 0, 0);
+					this.doors = 0;
+					break;
+			}
+			this.doors = Integer.valueOf(a[5]);
+			Location z = this.sign.getBlock().getLocation().clone();
+			Vector addition2 = addition.clone().divide(new Vector(3, 3, 3));
+			Location light = z.subtract(offset).add(0, 2, 0);
+			if (light.getBlock().getType().equals(Material.JIGSAW)
+					|| light.getBlock().getType().equals(Material.PUMPKIN)
+					|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
+					|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+				doorLocs = new ArrayList<Location>();
+				lightLocs = new ArrayList<Location>();
+				lightLocs.add(light.clone().subtract(addition2));
+				for (int i = 0; i < this.doors; i++) {
+					if (light.getBlock().getType().equals(Material.JIGSAW)
+							|| light.getBlock().getType().equals(Material.PUMPKIN)
+							|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
+							|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+						doorLocs.add(light.clone());
+						light.clone().subtract(0, 1, 0).getBlock().setType(Material.AIR);
+					} else {
+						break;
+					}
+					light.getBlock().setType(Material.JIGSAW);
+					Jigsaw z2 = (Jigsaw) light.getBlock().getBlockData();
+					z2.setOrientation(Orientation.valueOf(this.node.direction.name() + "_UP"));
+					light.getBlock().setBlockData(z2);
+
+					Location z3 = light.clone().add(addition2);
+					z3.getBlock().setType(Material.JIGSAW);
+					Jigsaw z4 = (Jigsaw) z3.getBlock().getBlockData();
+					z4.setOrientation(Orientation.valueOf(this.node.direction.getOppositeFace().name() + "_UP"));
+					z3.getBlock().setBlockData(z4);
+					light.add(addition);
+					light.subtract(addition2);
+					lightLocs.add(light.clone());
+					light.add(addition2);
+				}
+				lightLocs.forEach(loc -> {
+					loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
+				});
+				return;
+			}
+			light.add(offset).add(offset).subtract(0, 2, 0);
+			if (light.getBlock().getType().equals(Material.JIGSAW)
+					|| light.getBlock().getType().equals(Material.PUMPKIN)
+					|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
+					|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+				doorLocs = new ArrayList<Location>();
+				lightLocs = new ArrayList<Location>();
+				lightLocs.add(light.clone().subtract(addition2));
+				for (int i = 0; i < this.doors; i++) {
+					if (light.getBlock().getType().equals(Material.JIGSAW)
+							|| light.getBlock().getType().equals(Material.PUMPKIN)
+							|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
+							|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+						doorLocs.add(light.clone());
+						light.clone().subtract(0, 1, 0).getBlock().setType(Material.AIR);
+					} else {
+						break;
+					}
+					light.getBlock().setType(Material.JIGSAW);
+					Jigsaw z2 = (Jigsaw) light.getBlock().getBlockData();
+					z2.setOrientation(Orientation.valueOf(this.node.direction.name() + "_UP"));
+					light.getBlock().setBlockData(z2);
+
+					Location z3 = light.clone().add(addition2);
+					z3.getBlock().setType(Material.JIGSAW);
+					Jigsaw z4 = (Jigsaw) z3.getBlock().getBlockData();
+					z4.setOrientation(Orientation.valueOf(this.node.direction.getOppositeFace().name() + "_UP"));
+					z3.getBlock().setBlockData(z4);
+					light.add(addition);
+					light.subtract(addition2);
+					lightLocs.add(light.clone());
+					light.add(addition2);
+				}
+				lightLocs.forEach(loc -> {
+					loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
+				});
+
+				return;
+			}
+		} catch (IndexOutOfBoundsException e) {
 			TrainCarts.plugin.getLogger().log(Level.WARNING, this.content + " is an invalid SignActionPlatform sign.");
 			this.platform = null;
 			this.node.line.deleteNode(this.node);
-			if(this.node.line != TrainCarts.plugin.global) {
+			if (this.node.line != TrainCarts.plugin.global) {
 				TrainCarts.plugin.global.deleteNode(this.node);
 			}
 			return;
 		}
-    	return;
-    }
-	
+		return;
+	}
+
 	@Override
 	public Boolean match(String s) {
-    	return s.toLowerCase().equals("t:plat");
-    }
-	
+		return s.toLowerCase().equals("t:plat");
+	}
+
 	@Override
 	public String getAction() {
 		return "SignActionPlatform";
-    }
-	
+	}
+
 	@Override
 	public Double getSpeedLimit(MinecartGroup g) {
-		if(!this.station.closed) {
+		if (!this.station.closed) {
 			return 0.0;
 		} else {
 			return null;
 		}
-    }
-	
+	}
+
 	@Override
 	public void handleBuild(Player p) {
 		TextComponent m1 = new TextComponent(ChatColor.YELLOW + "You've built a ");
 		TextComponent clickable = new TextComponent(ChatColor.BLUE + "" + ChatColor.UNDERLINE + "PLATFORM");
 		TextComponent m2 = new TextComponent(ChatColor.YELLOW + " sign.");
 		TextComponent m3 = new TextComponent(ChatColor.GREEN + "\nUse this sign to make a train stop at a station.");
-		clickable.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Guides.GUIDE_LINK.id + Guides.PLATFORM_SIGN.id));
+		clickable.setClickEvent(
+				new ClickEvent(ClickEvent.Action.OPEN_URL, Guides.GUIDE_LINK.id + Guides.PLATFORM_SIGN.id));
 		p.spigot().sendMessage(m1, clickable, m2, m3);
 	}
 }

@@ -54,7 +54,7 @@ public class StationStore {
 	private String z;
 	public void postParse() {
 		Stations.values().forEach(station -> {
-			z = station.osi;
+			z = "";
 			station.platforms.values().forEach(p -> {
 				if(!z.contains(p.node.line.getChar())) {
 					z = z + p.node.line.getChar();

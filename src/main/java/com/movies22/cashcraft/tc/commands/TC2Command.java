@@ -30,7 +30,7 @@ public class TC2Command implements CommandExecutor {
 			return true;
 		}
 		if(args[0].equals("about")) {
-			sender.sendMessage(ChatColor.WHITE + "===== About TrainCarts 2 =====\n - Coded by: " + ChatColor.of(Colours.PURPLE.colour) + "Movies22 \n " + ChatColor.WHITE + "- Compiled on: " + ChatColor.of(Colours.CYAN.colour) + "24/10 \n " + ChatColor.ITALIC + "Beige line wen" + ChatColor.WHITE + "\n=====");
+			sender.sendMessage(ChatColor.WHITE + "===== About TrainCarts 2 =====\n - Coded by: " + ChatColor.of(Colours.PURPLE.colour) + "Movies22 \n " + ChatColor.WHITE + "- Compiled on: " + ChatColor.of(Colours.CYAN.colour) + "2/02/2024 \n " + ChatColor.ITALIC + "3 years!" + ChatColor.WHITE + "\n=====");
 			return true;
 		} else if(args[0].equals("reroute") && sender.isOp()) {
 			TrainCarts.plugin.global.reroute();
