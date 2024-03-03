@@ -1,5 +1,7 @@
 package com.movies22.cashcraft.tc;
 
+import java.util.logging.Level;
+
 import org.bukkit.Material;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Entity;
@@ -8,13 +10,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
 import net.md_5.bungee.api.ChatColor;
@@ -43,6 +46,24 @@ public class TCListener implements Listener {
         }
     }
 	
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onChat(AsyncPlayerChatEvent event) {
+		if(event.getMessage().equals("Cancel ") && TrainCarts.plugin.playerProgress.get(event.getPlayer().getName()) != null) {
+			TrainCarts.plugin.playerProgress.remove(event.getPlayer().getName());
+			event.getPlayer().sendMessage("§cRoute creation cancelled.");
+			event.setCancelled(true);
+		};
+		if(event.getMessage().equals("Cancel ") && TrainCarts.plugin.speedProgress.get(event.getPlayer().getName()) != null) {
+			TrainCarts.plugin.speedProgress.get(event.getPlayer().getName()).cancel(event.getPlayer());
+			event.setCancelled(true);
+		};
+		/*if(event.getMessage().equals("Cancel ") && TrainCarts.plugin.pathFindingProgress.get(event.getPlayer().getName()) != null) {
+			TrainCarts.plugin.pathFindingProgress.get(event.getPlayer().getName()).cancel(event.getPlayer());
+			event.setCancelled(true);
+		};*/
+
+	}
+
 	//Player disconnect
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onPlayerQuit(PlayerQuitEvent event) {
@@ -50,6 +71,10 @@ public class TCListener implements Listener {
 		Entity e = (Entity) p.getVehicle();
 		if(e == null) {
 			return;
+		}
+		if(TrainCarts.plugin.playerProgress.get(event.getPlayer().getName()) != null) {
+			TrainCarts.plugin.playerProgress.remove(event.getPlayer().getName());
+			event.getPlayer().sendMessage("§cRoute creation cancelled.");
 		}
         if(TrainCarts.plugin.MemberController.getFromEntity(e) != null) {
         	e.eject();
@@ -71,6 +96,21 @@ public class TCListener implements Listener {
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent e) {
     	Player p = (Player) e.getPlayer();
+
+		if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			if(TrainCarts.plugin.playerProgress.get(p.getName()) != null) {
+				TrainCarts.plugin.playerProgress.get(p.getName()).addBlock(e.getClickedBlock(), true);
+				e.setCancelled(true);
+				return;
+			};
+		} else if(e.getAction() == Action.LEFT_CLICK_BLOCK) {
+			if(TrainCarts.plugin.playerProgress.get(p.getName()) != null) {
+				TrainCarts.plugin.playerProgress.get(p.getName()).addBlock(e.getClickedBlock(), false);
+				e.setCancelled(true);
+				return;
+			};
+		}
+
         if(e.getClickedBlock().getState() instanceof Sign){
             if(e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem() != null){
             	if(e.getItem().getType().equals(Material.DEBUG_STICK)) {

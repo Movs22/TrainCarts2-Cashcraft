@@ -1,8 +1,8 @@
 package com.movies22.cashcraft.tc.utils;
 
 public enum Colours {
-	CHR("FF0000"),
-	GAR("1BF400"),
+	CHR("#FF0000"),
+	GAR("#1BF400"),
 	HS1("#00946F"),
 	HS2("#00DFFF"),
 	SVR("#B955FF"),

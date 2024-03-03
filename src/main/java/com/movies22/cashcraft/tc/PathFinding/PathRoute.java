@@ -1,10 +1,9 @@
-package com.movies22.cashcraft.tc.PathFinding;
+package com.movies22.cashcraft.tc.pathFinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Location;
 
 import com.bergerkiller.bukkit.sl.API.Variables;
@@ -35,7 +34,9 @@ public class PathRoute implements Cloneable {
 		this._line = l;
 		if(this._end.getAction() instanceof SignActionPlatform) {
 			Station e = ((SignActionPlatform) this._end.getAction()).station;
+			if(l.getChar() == null || l.getChar() == "") return;
 			Variables.get((l.getChar() + ":" + e.headcode)).set(e.displayName);
+			//TrainCarts.plugin.getLogger().log(Level.INFO, "Set " + (l.getChar() + ":" + e.headcode) + " to " + e.displayName + " | " + e.name);
 		}
 	}
 	
@@ -194,7 +195,7 @@ public class PathRoute implements Cloneable {
 			if(i > 1000) {
 				finished = true;
 				this._line.deleteRoute(this.name);
-				TrainCarts.plugin.getLogger().log(Level.WARNING, "Route " + this.name + " couldn't reach its destination."  + st.getLocationStr() + ">" + end.getLocationStr());
+				TrainCarts.plugin.getLogger().log(Level.WARNING, "Route " + this.name + " couldn't reach its destination."  + st.getLocationStr() + ">" + end.getLocationStr() + ".");
 				break;
 			}
 		}

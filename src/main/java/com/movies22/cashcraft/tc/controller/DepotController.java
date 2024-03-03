@@ -5,9 +5,9 @@ import java.time.ZoneId;
 import java.util.HashMap;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.Depot;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.signactions.SignActionSpawner;
 import com.movies22.cashcraft.tc.utils.Despawn;
@@ -88,7 +88,7 @@ public class DepotController extends BaseController  {
 					if(a != null) {
 						String headcode = "[AWAITING HEADCODE]";
 						Boolean finished = false;
-						PathRoute r = lane.getRoute(a._start).clone();
+						PathRoute r = lane.getRoute(a._start, true).clone();
 						r.reverse = v.route;
 						PathRoute b = r.clone();
 						MinecartGroup m = new MinecartGroup(a._line, headcode, v.getNextTrain());
@@ -122,6 +122,9 @@ public class DepotController extends BaseController  {
 						} else {
 							long y = v.getNextSpawnTime(1)._timestamp;
 							m.nextTrain = (int) ((y - z) / 1000);
+						}
+						if(v.getNextTrain() > 5 && v.getNextTrain() % 2 == 0) {
+							m.doubleUnit = true;
 						}
 						m.spawn(lane.node);
 					}

@@ -10,7 +10,6 @@ public enum Despawn {
 	EXCEEDED_REROUTING_ATTEMPTS("despawn.exceeded_rerouting_attempts", "Exceeded the maximum amount of rerouting attempts"),
 	ILLEGAL_SPEED("despawn.illegal_speed", "Exceeded the maximum speed. Cart #{POS} had a speed modifier of x{MOD}"),
 	BUFFERS_EATEN("despawn.buffers_eaten", "Buffers don't like to be eaten"),
-	ZOMBIE("despawn.zombie",null),
 	INVALID_TRAIN("despawn.invalid_train","This train is missing carts."),
 	UNKNOWN("despawn.unknown","An unknown error has occured");
 	public final String name;

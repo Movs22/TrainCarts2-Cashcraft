@@ -4,32 +4,39 @@ package com.movies22.cashcraft.tc.controller;
 import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rail;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Minecart;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
 import com.movies22.cashcraft.tc.api.MinecartMember;
 import com.movies22.cashcraft.tc.api.VirtualMinecart;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
+import com.movies22.cashcraft.tc.utils.Despawn;
+import com.movies22.cashcraft.tc.offline.*;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
 
 public class MinecartMemberController extends BaseController {
 	private ConcurrentHashMap<UUID, MinecartMember> MinecartMembers;
 	private ConcurrentHashMap<UUID, MinecartMember> MinecartHeadMembers;
+	public BlockData d;
+	public BlockData d2;
+	public BlockData d3;
 	private Vector breakVec = new Vector(0, 0, 0);
 	public MinecartMemberController() {
+		this.d = Material.DIAMOND_BLOCK.createBlockData();
+		this.d2 = Material.GOLD_BLOCK.createBlockData();
+		this.d3 = Material.BEACON.createBlockData();
 		this.MinecartMembers = new ConcurrentHashMap<UUID, MinecartMember>();
 		this.MinecartHeadMembers = new ConcurrentHashMap<UUID, MinecartMember>();
 	}
@@ -79,6 +86,11 @@ public class MinecartMemberController extends BaseController {
 
 	public MinecartMember getFromEntity(Entity e) {
 		return this.getFromUUID(e.getUniqueId());
+	}
+
+	private OfflineLocation getLocation(Location l) {
+		World w = l.getWorld();
+		return (TrainCarts.plugin.offlineWorlds.get(w).getBlock(l.getBlockX(), l.getBlockY(), l.getBlockZ())).getLocation().clone();
 	}
 
 	private Double speed;
@@ -133,6 +145,7 @@ public class MinecartMemberController extends BaseController {
 				} else {
 					nextNode = l;
 					nextLoc = l;
+					g.destroy(Despawn.INVALID_SECTION);
 				}
 				Double nd = l.distance(nextNode);
 				Double ld = l.distance(nextLoc);
@@ -150,6 +163,11 @@ public class MinecartMemberController extends BaseController {
 				}
 				if(g.currentRoute.stops == null) {
 					return;
+				}
+				speed = m.currentSpeed;			
+				if(ld < 10.0 && nd > 10.0 && m.currentSpeed > 0.0) {
+					speed = Math.abs(m._targetSpeed - 0.4) * ((ld + 2.0) / 10.0) + 0.4;
+					m.currentSpeed = speed;
 				}
 				if(g.currentRoute.stops.size() > 0) {
 					PathNode st = g.currentRoute.stops.get(0).node;
@@ -184,6 +202,8 @@ public class MinecartMemberController extends BaseController {
 						}
 					}
 				}
+
+
 				if (nd < 10.0 && n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
 					speed = Math.abs(m._targetSpeed - n.getAction().getSpeedLimit(g)) * ((nd + 2.0) / 12.0) + n.getAction().getSpeedLimit(g);
 					m.currentSpeed = speed;
@@ -202,9 +222,10 @@ public class MinecartMemberController extends BaseController {
 					z = nextLoc.getZ() - l.getZ();
 				}
 				if(!g.canProceed) return;
+
 				if (m._targetSpeed > 0.05) {
-					while (i < 5 && (ld < (2.0) || nd < (1.0))) {
-						if (nd < (2.0)) {
+					while (i < 5 && (ld < (0.5 + speed) || nd < (0.5 + speed))) {
+						if (nd < (0.5 + speed)) {
 							SignAction b = n.getAction();
 							if (!b.executed.contains(g) && !b.getClass().equals(SignActionBlocker.class) && !b.getClass().equals(SignActionRBlocker.class)) {
 								e.syncY(nextNode.getY());
@@ -212,6 +233,7 @@ public class MinecartMemberController extends BaseController {
 								b.ExitExecuted.remove(g);
 								m.prevNode = m.getNextNode();
 								m.lastAction = b;
+								//m.proceedTo(nextNode);
 								b.execute(g);
 								b.executed.add(g);
 								if (b.getSpeedLimit(g) != null) {
@@ -226,7 +248,7 @@ public class MinecartMemberController extends BaseController {
 								}
 							}
 						}
-						if(ld >= (2.0)) {
+						if(ld >= (0.5 + speed)) {
 							break;
 						}
 						e.syncY(nextLoc.getY());
@@ -266,15 +288,15 @@ public class MinecartMemberController extends BaseController {
 					}
 				}
 				Double ts = m._targetSpeed;
-				if (m.currentSpeed < (ts - 0.04)) {
+				if (m.currentSpeed < ts) {
 					m.currentSpeed += 0.05;
-				} else if (m.currentSpeed > (ts + 0.04) ) {
+				} else if (m.currentSpeed > ts) {
 					m.currentSpeed -= 0.05;
 				}
 				m._mod = 1.0;
 				speed = m.currentSpeed;
 				e.setMaxSpeed(m._targetSpeed);
-				OfflineLocation loc = e.getLocation();
+				OfflineLocation loc = getLocation(e.getLocation());
 				Block rail = loc.getBlock();
 				Double yChange = 0.0;
 				if(!rail.getType().equals(Material.RAIL) && !rail.getType().equals(Material.POWERED_RAIL)) {
@@ -286,7 +308,6 @@ public class MinecartMemberController extends BaseController {
 					rail = loc.add(0, 1, 0).getBlock();
 					yChange = 1.0;
 				}
-				e.syncY(Double.valueOf(loc.getBlockY()));
 				if(!g.virtualized) {
 					if(((l.distance(g.tail().getEntity().getLocation()) > 20.0d))/* || (l.distance(g.tail(1).getEntity().getLocation()) < 1.0d))*/) {
 						g.destroy();
@@ -296,7 +317,7 @@ public class MinecartMemberController extends BaseController {
 				if(rail.getType().equals(Material.RAIL) || rail.getType().equals(Material.POWERED_RAIL)) {
 					Rail rail2 = (Rail) rail.getBlockData();
 					if (rail.getType().equals(Material.RAIL)) {
-						if (e.getPassengers().size() > 0) {
+						if (e.getPassengers().size() > 0 || g.virtualized) {
 							e.setMaxSpeed(0.4);
 						} else {
 							e.setMaxSpeed(0.3);
@@ -313,6 +334,7 @@ public class MinecartMemberController extends BaseController {
 								m.facing = BlockFace.WEST;
 							}
 							z = 0.0;
+							e.syncY(Double.valueOf(loc.getBlockY()));
 							break;
 						case NORTH_SOUTH:
 							x = 0.0;
@@ -322,6 +344,7 @@ public class MinecartMemberController extends BaseController {
 							} else {
 								m.facing = BlockFace.NORTH;
 							}
+							e.syncY(Double.valueOf(loc.getBlockY()));
 							break;
 						case SOUTH_EAST:
 							x = nextLoc.getX() - l.getX();
@@ -363,18 +386,38 @@ public class MinecartMemberController extends BaseController {
 						case ASCENDING_NORTH: 
 							x = 0.0;
 							z = nextLoc.getZ() - l.getZ();
+							if(z > 0) {
+								e.syncY(Double.valueOf(loc.getBlockY()));
+							} else {
+								e.syncY(Double.valueOf(loc.getBlockY() + 1));
+							}
 							break;
 						case ASCENDING_SOUTH: 
 							x = 0.0;
 							z = nextLoc.getZ() - l.getZ();
+							if(z < 0) {
+								e.syncY(Double.valueOf(loc.getBlockY()));
+							} else {
+								e.syncY(Double.valueOf(loc.getBlockY() + 1));
+							}
 							break;
 						case ASCENDING_EAST: 
 							x = nextLoc.getX() - l.getX();
+							z = 0.0;
+							if(x < 0) {
+								e.syncY(Double.valueOf(loc.getBlockY()));
+							} else {
+								e.syncY(Double.valueOf(loc.getBlockY() + 1));
+							}
 							break;
 						case ASCENDING_WEST: 
 							x = nextLoc.getX() - l.getX();
 							z = 0.0;
-							m.facing = BlockFace.WEST;
+							if(x > 0) {
+								e.syncY(Double.valueOf(loc.getBlockY()));
+							} else {
+								e.syncY(Double.valueOf(loc.getBlockY() + 1));
+							}
 							break;
 						default:
 							break;
@@ -384,28 +427,57 @@ public class MinecartMemberController extends BaseController {
 				vel = new Vector(x, 0, z);
 				if(vel.isZero()) return;
 				speed = m.currentSpeed;				
-				if (e.getPassengers().size() > 0) {
-					e.setMaxSpeed(m._targetSpeed);
+				if (e.getPassengers().size() > 0 || g.virtualized) {
+					e.setMaxSpeed(ts);
 					if(g.onCurve) {
 						e.setMaxSpeed(0.4);
 					}
 				} else {
-					speed = speed * 3 / 4;
-					e.setMaxSpeed(m._targetSpeed*3/4);
+					if(m.index == 0) {
+						speed = speed * 3 / 4;
+					} else {
+						m.currentSpeed = speed * 3 / 4;
+					}
+					e.setMaxSpeed(ts*3/4);
 					if(g.onCurve) {
 						e.setMaxSpeed(0.3);
 					}
 				}
 				vel = vel.normalize();
 				e.setVelocity(vel.multiply(speed));
-				for (Player onlinePlayer : TrainCarts.plugin.getServer().getOnlinePlayers()) {
-					onlinePlayer.sendBlockChange(l.add(0, 1, 0), Material.DIAMOND_BLOCK.createBlockData());
-					onlinePlayer.sendBlockChange(nextLoc.add(0, 1, 0), Material.GOLD_BLOCK.createBlockData());
-					onlinePlayer.sendBlockChange(nextNode.add(0, 1, 0), Material.BEACON.createBlockData());
-					nextLoc.subtract(0, 1, 0);
-					nextNode.subtract(0, 1, 0);
-					l.subtract(0, 1, 0);
-				}
+				/*Player p = TrainCarts.plugin.getServer().getPlayer("Movies22");
+				if(p != null) {
+					loc.add(0, 2, 0);
+					switch(m.facing) {
+						case EAST:
+							p.sendBlockChange(loc, Material.RED_WOOL.createBlockData());
+							break;
+						case NORTH:
+							p.sendBlockChange(loc, Material.YELLOW_WOOL.createBlockData());
+							break;
+						case SOUTH:
+							p.sendBlockChange(loc, Material.GREEN_WOOL.createBlockData());
+							break;
+						case WEST:
+							p.sendBlockChange(loc, Material.BLUE_WOOL.createBlockData());
+							break;
+						default:
+							p.sendBlockChange(loc, Material.BEDROCK.createBlockData());
+							break;
+					}
+					for(int y = 0; y < 10; y++) {
+						PathNode w = m.getNextNode(y);
+						if(w == null) return;
+						p.sendBlockChange(w.loc.add(0, y+1, 0), Material.AIR.createBlockData());
+						w.loc.subtract(0, y+1, 0);
+						p.sendBlockChange(w.loc.add(0, y, 0), Material.BEACON.createBlockData());
+						w.loc.subtract(0, y, 0);
+					}
+					loc.subtract(0, 2, 0);
+					p.sendBlockChange(nextLoc, d2);
+					p.sendBlockChange(nextNode, d3);*/
+					//n.renderConnections(p);
+				//}
 			} else {
 				m.getGroup().destroy();
 			}
@@ -427,44 +499,40 @@ public class MinecartMemberController extends BaseController {
 
 				Location nextLoc = m.nextCart().getLocation();
 
+
 				m._mod = l.distance(nextLoc)/1.2;
+				if(m.index == g._getLength()/2 && g.doubleUnit) m._mod = l.distance(nextLoc)/1.6;
 
 				Vector vel = nextLoc.subtract(l).toVector();
 				if(vel.isZero()) return;
 				Block rail = e.getLocation().getBlock();
 				if (!rail.getType().equals(Material.RAIL)) {
-					e.setMaxSpeed(g.head()._targetSpeed * m._mod);
 					if(m.index == g._getLength() - 1) {
 						g.onCurve = false;
 					}
 				} else {
-					e.setMaxSpeed(0.4*m._mod);
 					g.onCurve = true;
 				}
 				Double speed = 0.0d;
-				if (e.getPassengers().size() > 0/* && g.head()._targetSpeed != 0.4d && g.head()._targetSpeed != 0.0d*/) {
+				if (e.getPassengers().size() > 0) {
 					speed = g.head().currentSpeed;
 					vel = vel.multiply(4);
 					vel = vel.divide(new Vector(3, 3, 3));
 					e.setMaxSpeed(g.head().currentSpeed*m._mod);
 					if(g.onCurve) {
+						speed = 0.4;
 						e.setMaxSpeed(0.4*m._mod);
 					}
 				} else {
 					speed = g.head().currentSpeed / 4 * 3;
-					e.setMaxSpeed(m._targetSpeed*3*m._mod/4);
+					e.setMaxSpeed(g.head().currentSpeed*3*m._mod/4);
 					if(g.onCurve) {
+						speed = 0.3;
 						e.setMaxSpeed(0.3*m._mod);
 					}
 				}
 				vel = vel.normalize();
 				e.setVelocity(vel.multiply(m._mod*speed));
-				for (Player onlinePlayer : TrainCarts.plugin.getServer().getOnlinePlayers()) {
-					onlinePlayer.sendBlockChange(l.add(0, 1+m.index, 0), Material.DIAMOND_BLOCK.createBlockData());
-					onlinePlayer.sendBlockChange(nextLoc.add(0, 1+m.index, 0), Material.REDSTONE_BLOCK.createBlockData());
-					nextLoc.subtract(0, 1+m.index, 0);
-					l.subtract(0, 1+m.index, 0);
-				}
 			} else {
 				m.getGroup().destroy();
 			}

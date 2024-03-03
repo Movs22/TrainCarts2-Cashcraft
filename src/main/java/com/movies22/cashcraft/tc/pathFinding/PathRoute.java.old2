@@ -1,0 +1,292 @@
+package com.movies22.cashcraft.tc.pathFinding;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.logging.Level;
+
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.data.BlockData;
+
+import com.bergerkiller.bukkit.sl.API.Variables;
+import com.movies22.cashcraft.tc.TrainCarts;
+import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+import com.movies22.cashcraft.tc.api.Station;
+import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
+import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
+import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
+import com.movies22.cashcraft.tc.signactions.SignActionSpawner;
+
+public class PathRoute implements Cloneable {
+    public PathNode _start;
+    public PathNode _end;
+    public String name;
+    public MetroLine _line;
+    public List<PathOperation> route = new ArrayList<PathOperation>();
+    public List<SignActionPlatform> stops = new ArrayList<SignActionPlatform>();
+    public List<PathNode> nodes = new ArrayList<PathNode>();
+    public String reverse;
+
+    public PathRoute(String n, List<PathNode> s, MetroLine l) {
+        if (s.size() == 0) {
+            return;
+        }
+        this._start = s.get(0);
+        this._end = s.get(s.size() - 1);
+        this.nodes = s;
+        this.name = n;
+        this._line = l;
+        if (this._end.getAction() instanceof SignActionPlatform) {
+            Station e = ((SignActionPlatform) this._end.getAction()).station;
+            if (l.getChar() == null || l.getChar() == "")
+                return;
+            Variables.get((l.getChar() + ":" + e.headcode)).set(e.displayName);
+            // TrainCarts.plugin.getLogger().log(Level.INFO, "Set " + (l.getChar() + ":" +
+            // e.headcode) + " to " + e.displayName + " | " + e.name);
+        }
+    }
+
+    public void clear() {
+        if (this.nodes != null) {
+            this.nodes.clear();
+            this.nodes = null;
+        }
+        this.stops.clear();
+        this.stops = null;
+    }
+
+    @Override
+    public String toString() {
+        return this._line + ":" + this.name;
+    }
+
+    @Override
+    public PathRoute clone() {
+        PathRoute a = new PathRoute(this.name, this.nodes, this._line);
+        a.route = new ArrayList<PathOperation>();
+        this.route.forEach(op -> {
+            a.route.add(op.clone());
+        });
+        a.stops = new ArrayList<SignActionPlatform>(this.stops);
+        a.nodes = new ArrayList<PathNode>(nodes);
+        a.reverse = this.reverse;
+        return a;
+    }
+
+    public List<PathOperation> getRoute() {
+        return this.route;
+    }
+
+    public Boolean setReverse(String r) {
+        this.reverse = r;
+        return true;
+    }
+
+    public String getReverse() {
+        return this.reverse;
+    }
+
+    private int i;
+
+    public void calculate() {
+        route = new ArrayList<PathOperation>();
+        stops = new ArrayList<SignActionPlatform>();
+        for (i = 0; i < (this.nodes.size() - 1); i++) {
+            List<PathOperation> s = this.calculateSection(this.nodes.get(i), this.nodes.get(i + 1));
+            if (s == null)
+                return;
+            List<PathOperation> s2 = new ArrayList<PathOperation>();
+            s.forEach(a -> {
+                PathOperation z = a.clone();
+                s2.add(z);
+            });
+            this.route.addAll(s2);
+        }
+        for(PathOperation n : this.route) {
+            if(n.getEndNode().getAction() instanceof SignActionPlatform) stops.add((SignActionPlatform) n.getEndNode().getAction());
+        }
+    }
+
+    PathNode start;
+    PathOperation connection;
+    boolean finished;
+    private List<PathNode> checkednodes;
+    public List<PathFindingNode> frontline;
+    @SuppressWarnings("unused")
+    private int z = 0;
+    private int score = 0;
+    private PathFindingNode current;
+    private Comparator<PathFindingNode> sort = new Comparator<PathFindingNode>() {
+        @Override
+        public int compare(PathFindingNode n1, PathFindingNode n2) {
+            return n1.score - n2.score;
+        }
+    };
+    private int x;
+    private int y;
+    public List<PathOperation> calculateSection(PathNode st, PathNode en) {
+        checkednodes = new ArrayList<PathNode>();
+        frontline = new ArrayList<PathFindingNode>();
+        List<PathOperation> route2 = new ArrayList<PathOperation>();
+        PathNode end = en;
+        current = new PathFindingNode(st, null, null, score);
+        score = /*st.manhatamDistance(st.loc)*2*/ + en.manhatamDistance(st.loc);
+        finished = false;
+        checkednodes.add(current.node);
+        y = 300;
+        x = 0;
+        while (!finished || z < 1000) {
+            z++;
+            if (z > 999 || current == null) {
+                break;
+            }
+            current.node.connections.forEach(con -> {
+                if (con.getEndNode() == null || checkednodes.contains(con.getEndNode()) || con.getEndNode().equals(con.getStartNode())) return;
+                x++;
+                score = st.manhatamDistance(con.getEndNode().loc) + en.manhatamDistance(con.getEndNode().loc);
+                if (con.getEndNode().getAction().getClass().equals(SignActionRBlocker.class)) {
+                    SignActionRBlocker b = (SignActionRBlocker) con.getEndNode().getAction();
+                    if(b.isBlocked(this)) {
+                        score += 1000000;
+                        checkednodes.add(con.getEndNode());
+                        frontline.remove(current);
+                        //con.getEndNode().loc.clone().add(0, y-con.getEndNode().loc.getBlockY(), 0).getBlock().setType(Material.BEDROCK);
+                        return;
+                    };
+                }
+                if (con.getEndNode().getAction().getClass().equals(SignActionPlatform.class)) {
+                    SignActionPlatform b = (SignActionPlatform) con.getEndNode().getAction();
+                    if(!b.reverse && !b.node.direction.equals(con.opositeFacing)) {
+                        score += 1000000;
+                        checkednodes.add(con.getEndNode());
+                        frontline.remove(current);
+                        TrainCarts.plugin.getLogger().log(Level.WARNING, "Station " + b.station.name + "~" + b.platform + " has the WRONG orientation. | Expected " + con.opositeFacing + " and got " + b.node.direction);
+                        //con.getEndNode().loc.clone().add(0, y-con.getEndNode().loc.getBlockY(), 0).getBlock().setType(Material.BEDROCK);
+                        return;
+                    };
+                }
+                if (con.getEndNode().getAction().getClass().equals(SignActionSpawner.class)) {
+                    score += 100000;
+                    checkednodes.add(con.getEndNode());
+                    frontline.remove(current);
+                    //con.getEndNode().loc.clone().add(0, y-con.getEndNode().loc.getBlockY(), 0).getBlock().setType(Material.BEDROCK);
+                    return;
+                }
+                if(con.getEndNode().getAction().getClass().equals(SignActionBlocker.class)) {
+                    SignActionBlocker b = (SignActionBlocker) con.getEndNode().getAction();
+                    if(b.getBlocked(con.getEndNode().sign).equals(con.getFacing())) {
+                        score += 100000;
+                        checkednodes.add(con.getEndNode());
+                        frontline.remove(current);
+                        //con.getEndNode().loc.clone().add(0, y-con.getEndNode().loc.getBlockY(), 0).getBlock().setType(Material.BEDROCK);
+                        return;
+                    };
+                }
+                frontline.add(new PathFindingNode(con.getEndNode(), current, con, score));
+            });
+            if(x == 0) {
+                checkednodes.add(current.node);
+                frontline.remove(current);
+                continue;
+            }
+            frontline.sort(sort);
+            if (frontline.size() < 1) {
+                z = 1000;
+                finished = true;
+                break;
+            };
+            /*for(PathFindingNode n : frontline) {
+                Location l = n.node.loc.clone();
+                l.add(0, y-l.getBlockY()+2, 0);
+                for(int a = 0; a < (n.con.locs.size()-1); a++) {
+                    Location l2 = n.con.locs.get(a).clone().add(0, y-n.prevNode.node.loc.getBlockY(), 0);
+                    drawLine(l2, n.con.locs.get(a+1).clone().add(0, y-n.prevNode.node.loc.getBlockY(), 0), Material.RED_WOOL);
+                }
+                l.getBlock().setType(Material.REDSTONE_BLOCK);
+                TrainCarts.plugin.getLogger().log(Level.INFO, "Route finding - " + n.node.getLocationStr() + " | score: " + n.score);
+            }*/
+            //y++;
+            current = frontline.get(0);
+            checkednodes.add(current.node);
+            frontline.removeIf(a -> (a.equals(current)));
+            if (current.node.equals(end)) {
+                finished = true;
+                frontline.add(current);
+                //Location l = current.node.loc.clone();
+                //l.add(0, y-l.getBlockY()+2, 0);
+                //l.getBlock().setType(Material.NETHERITE_BLOCK);
+                break;
+            }
+            z++;
+        }
+        if (z > 999 || current == null) {
+            TrainCarts.plugin.getLogger().log(Level.INFO, "Failed to calculate route between " + st.getLocationStr() + " and " + en.getLocationStr() + ". Last node - " + (current != null && current.prevNode != null ? current.node.getLocationStr() + " << " + current.prevNode.node.getLocationStr() : "null"));
+            return null;
+        }
+        //TrainCarts.plugin.getLogger().log(Level.INFO, "===========");
+        while (!current.node.equals(st)) {
+            PathNode nextNode = current.node;
+            // if(current.node.equals(st)) break;
+            /*for(int a = 0; a < (current.con.locs.size()-1); a++) {
+                Location l2 = current.con.locs.get(a).clone().add(0, y-current.prevNode.node.loc.getBlockY()+1, 0);
+                drawLine(l2, current.con.locs.get(a+1).clone().add(0, y-current.prevNode.node.loc.getBlockY()+1, 0), Material.GREEN_WOOL);
+            }*/
+            current = current.prevNode;
+            //y--;
+            for(PathOperation con : current.node.connections) {
+                if (con.getEndNode() == null)
+                    continue;
+                if (con.getEndNode().equals(nextNode)) {
+                    route2.add(0, con);
+                    break;
+                }
+            };
+        }
+        return route2;
+    }
+
+    public void drawLine(Location st, Location e, Material t) {
+        Double dx = e.getX() - st.getX();
+        Double dz = e.getZ() - st.getZ();
+        Location s = st.clone();
+        //TrainCarts.plugin.getLogger().log(Level.INFO, "Drawing from " + s + " to " + e + " - material - " + t + " | " + dx + " | " + dz);
+        if(Math.abs(dx) > Math.abs(dz)) {
+            if(dx > 0) {
+                for(Double i = st.getX(); i < e.getX(); i++) {
+                    s.add(dx/Math.abs(dx), 0, dz/Math.abs(dx)).getBlock().setType(t);
+                }
+            } else {
+                for(Double i = st.getX(); i > e.getX(); i--) {
+                    s.add(dx/Math.abs(dx), 0, dz/Math.abs(dx)).getBlock().setType(t);
+                }
+
+            }   
+        } else {
+            if(dz > 0) {
+                for(Double i = st.getZ(); i < e.getZ(); i++) {
+                    s.add(dx/Math.abs(dz), 0, dz/Math.abs(dz)).getBlock().setType(t);
+                }
+            } else {
+                for(Double i = st.getZ(); i > e.getZ(); i--) {
+                    s.add(dx/Math.abs(dz), 0, dz/Math.abs(dz)).getBlock().setType(t);
+                }
+            }
+        }
+    }
+
+    public class PathFindingNode {
+        private int score;
+        public PathNode node;
+        public PathFindingNode prevNode;
+        public PathOperation con;
+
+        private PathFindingNode(PathNode n, PathFindingNode p, PathOperation c, int s) {
+            this.score = s;
+            this.node = n;
+            this.prevNode = p;
+            this.con = c;
+        }
+    }
+}

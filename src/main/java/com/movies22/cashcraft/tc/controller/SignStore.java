@@ -5,7 +5,6 @@ import java.util.HashMap;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
 
-import com.movies22.cashcraft.tc.api.MetroLines;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 
 public class SignStore {

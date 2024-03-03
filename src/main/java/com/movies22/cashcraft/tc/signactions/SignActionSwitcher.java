@@ -2,14 +2,16 @@ package com.movies22.cashcraft.tc.signactions;
 
 import java.util.logging.Level;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rail;
 import org.bukkit.entity.Player;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathOperation;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
+import com.movies22.cashcraft.tc.pathFinding.PathOperation;
 import com.movies22.cashcraft.tc.utils.Despawn;
 import com.movies22.cashcraft.tc.utils.Guides;
 
@@ -27,43 +29,62 @@ public class SignActionSwitcher extends SignAction {
 		}
 		t = null;
 		BlockFace s = group.head().facing;
-		this.node.connections.forEach(con -> {
-			if(con.getEndNode() != null && (con.getEndNode().equals(group.head().getNextNode(0, true)) || con.getEndNode().equals(group.head().getNextNode(1, true)))) {
-				t = con;
-			}
-		});
 		Rail.Shape a;
-		if(t == null) {
-			group.destroy(Despawn.INVALID_HEADING);
-			return false;
-		}
-		if(s.getOppositeFace().equals(t.facing)) {
+		if(group.head().getNextNode(1, true).equals(this.node)) {
 			try {
-				a = Rail.Shape.valueOf(s + "_" + t.facing);
+				a = Rail.Shape.valueOf(s + "_" + s.getOppositeFace());
 			} catch(IllegalArgumentException e) {
 				try {
-					a = Rail.Shape.valueOf(t.facing + "_" + s);
-				} catch(IllegalArgumentException e2) {
-					group.destroy(Despawn.INVALID_ROUTE);
-					throw(e2);
-				}
-			} 
-		} else {
-			try {
-				a = Rail.Shape.valueOf(s.getOppositeFace() + "_" + t.facing);
-			} catch(IllegalArgumentException e) {
-				try {
-					a = Rail.Shape.valueOf(t.facing + "_" + s.getOppositeFace());
+					a = Rail.Shape.valueOf(s.getOppositeFace() + "_" + s);
 				} catch(IllegalArgumentException e2) {
 					TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: FAILED to find connection between " + t.facing.toString() + " and " + s.getOppositeFace().toString());
 					group.destroy(Despawn.INVALID_ROUTE);
 					throw(e2);
 				}
+			} 
+		} else {
+			this.node.connections.forEach(con -> {
+				if(con.getEndNode() != null && (con.getEndNode().equals(group.head().getNextNode(0, true)) || con.getEndNode().equals(group.head().getNextNode(1, true)))) {
+				t = con;
+				}
+			});
+			if(t == null) {
+				TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: FAILED to find connection between " + group.head().getNextNode(1).getLocationStr() + " and " + s.getOppositeFace().toString());
+				group.destroy(Despawn.INVALID_HEADING);
+				return false;
+			}
+			if(s.getOppositeFace().equals(t.facing)) {
+				try {
+					a = Rail.Shape.valueOf(s + "_" + t.facing);
+				} catch(IllegalArgumentException e) {
+					try {
+						a = Rail.Shape.valueOf(t.facing + "_" + s);
+					} catch(IllegalArgumentException e2) {
+						TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: FAILED to find connection between " + t.facing.toString() + " and " + s.getOppositeFace().toString());
+						group.destroy(Despawn.INVALID_ROUTE);
+						throw(e2);
+					}
+				} 
+			} else {
+				try {
+					a = Rail.Shape.valueOf(s.getOppositeFace() + "_" + t.facing);
+				} catch(IllegalArgumentException e) {
+					try {
+						a = Rail.Shape.valueOf(t.facing + "_" + s.getOppositeFace());
+					} catch(IllegalArgumentException e2) {
+						TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: FAILED to find connection between " + t.facing.toString() + " and " + s.getOppositeFace().toString());
+						group.destroy(Despawn.INVALID_ROUTE);
+						throw(e2);
+					}
+				}
 			}
 		}
 		if(a instanceof Rail.Shape) {
+			group.head().getEntity().syncPos(this.node.loc);
 			group.head().facing = s.getOppositeFace();
 			this.node.rail.setShape(a);
+			Location l = this.node.loc;
+			TrainCarts.plugin.offlineWorlds.get(l.getWorld()).getBlock(l.getBlockX(), l.getBlockY(), l.getBlockZ()).setBlockData((BlockData) this.node.rail);
 			this.node.loc.getBlock().setBlockData(this.node.rail);
 			this.node.loc.getBlock().getState().update();
 		}

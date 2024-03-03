@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
@@ -18,12 +19,13 @@ import org.bukkit.util.Vector;
 
 import com.bergerkiller.bukkit.common.chunk.ForcedChunk;
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathOperation;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.controller.ChunkArea;
 import com.movies22.cashcraft.tc.controller.PlayerController;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathOperation;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
+import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 import com.movies22.cashcraft.tc.utils.Despawn;
 
 import net.md_5.bungee.api.ChatColor;
@@ -48,7 +50,7 @@ public class MinecartGroup {
 	public int nextTrain = 0;
 	public Double prevTS = 0.6;
 	public Boolean recording = false;
-
+	public Boolean doubleUnit = false;
 	public Location lastCurve = null;
 
 	public Boolean virtualized = false;
@@ -56,6 +58,8 @@ public class MinecartGroup {
 	public Boolean isEmpty = true;
 	public Boolean canProceed = true;
 	public Boolean onCurve = false;
+
+	public SignActionPlatform prevStop;
 
 	public List<ForcedChunk> chunks = new ArrayList<ForcedChunk>();
 
@@ -138,6 +142,10 @@ public class MinecartGroup {
 				this.head().getNextNode().onBlock = null;
 			}
 		}
+		if(this.routes.size() < 1) {
+			this.destroy(Despawn.INVALID_SECTION);
+			return null;
+		}
 		PathRoute r = this.routes.get(0).clone();
 		this.currentRoute = r.clone();
 		if (h) {
@@ -181,6 +189,10 @@ public class MinecartGroup {
 				a = "8";
 			} else if (r._line.getName().equals("Grey")) {
 				a = "9";
+			} else if (r._line.getName().equals("!PeopleMover")) {
+				a = "<";
+			} else if (r._line.getName().equals("Airport")) {
+				a = ">";
 			} else {
 				a = "0";
 			}
@@ -292,6 +304,7 @@ public class MinecartGroup {
 			if (this.head().getNextNode() != null) {
 				this.head().getNextNode().onBlock = null;
 			}
+			if(this.prevStop != null) this.prevStop.setLights(Material.PEARLESCENT_FROGLIGHT);
 			this.line.removeTrain(this);
 			this._dest = null;
 			this._spawn = null;
@@ -351,23 +364,35 @@ public class MinecartGroup {
 
 	public void reverse() {
 		this.nextRoute = 0;
+		Location l = this.tail().getEntity().getLoc(true);
 		this.members.forEach(m -> {
 			TrainCarts.plugin.MemberController.removeMember(m);
+			m.spawned = false;
 		});
+		this.virtualized = true;
 		List<MinecartMember> a = new ArrayList<MinecartMember>(this.members);
 		this.members.clear();
 		for (int i = (a.size() - 1); i >= 0; i--) {
 			a.get(i).index = (a.size() - i - 1);
+			a.get(i).getEntity().syncPos(l);
 			this.members.add(a.get(i));
 		}
 		this.members.forEach(m -> {
 			m.setPivot(this.head());
-			m.setOffset(m.index * 1.5d);
-			TrainCarts.plugin.MemberController.addMember(m);
+			if(m.index < this.length/2 && this.doubleUnit) {
+				m.setOffset(m.index * 1.2d);
+			} else if(m.index > this.length/2 && this.doubleUnit) {
+				m.setOffset((m.index-1) * 1.2d + 1.6d);
+			} else {
+				m.setOffset(m.index * 1.2d);
+			}
+			if(!m.virtualized && m.index > 0) {
+				m.spawned = true;
+				TrainCarts.plugin.MemberController.addMember(m);
+			}
 		});
-		if (this.head().getNextNode() != null) {
-			this.head().getNextNode().onBlock = null;
-		}
+		TrainCarts.plugin.MemberController.addMember(this.head());
+		this.head().spawned = true;
 		this.head().lastAction = this.tail().lastAction;
 		this.head().lastAction.executed.remove(this);
 		this.tail().lastAction = null;
@@ -527,7 +552,8 @@ public class MinecartGroup {
 	}
 
 	public void virtualize() {
-		if (this.head().currentSpeed > 0.05) {
+		if(this.prevStop != null) this.prevStop.setLights(Material.PEARLESCENT_FROGLIGHT);
+		//if (this.head().currentSpeed > 0.05) {
 			// disconnects the head cart from the controller, to allow the removal of the
 			// other carts without the entire train despawning
 			this.head().spawned = false;
@@ -544,7 +570,7 @@ public class MinecartGroup {
 			// reconnects the head cart to the controller
 			this.head().virtualize();
 			this.head().spawned = true;
-		}
+		//}
 	}
 
 	public void unVirtualize() {
@@ -557,7 +583,7 @@ public class MinecartGroup {
 		for (int i = 1; i < this.members.size(); i++) {
 			MinecartMember mm = this.members.get(i);
 			if (mm.virtualized) {
-				mm.load(false);
+				mm.load(offset);
 				mm.setPivot(this.head());
 			}
 		}
@@ -573,9 +599,13 @@ public class MinecartGroup {
 		}
 		Location l = this.head().getEntity().getLocation();
 		PlayerController p = TrainCarts.plugin.PlayerController;
-		if (false) { //p.hasToLoad(l)) {
+		if (p.hasToLoad(l)) {
 			if (this.virtualized == true) {
-				//this.unVirtualize();
+				if(this.head().currentSpeed == 0.0) {
+					this.unVirtualize(true);
+				} else {
+					this.unVirtualize();
+				}
 			}
 		} else if (this.virtualized == false) {
 			this.virtualize();

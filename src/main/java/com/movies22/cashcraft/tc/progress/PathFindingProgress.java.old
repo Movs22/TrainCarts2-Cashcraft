@@ -1,0 +1,124 @@
+package com.movies22.cashcraft.tc.progress;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute.PathFindingNode;
+import com.movies22.cashcraft.tc.signactions.SignActionSpeed;
+import com.movies22.cashcraft.tc.TrainCarts;
+import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
+
+public class PathFindingProgress {
+    public Player player;
+    public PathRoute route;
+    public List<FakeBlock> fakeBlocks;
+    public Inventory prevInv;
+    public Double speed;
+    private PathFindingNode c;
+    public PathFindingProgress(Player p, PathRoute r) {
+        this.player = p;
+        this.route = r;
+        this.prevInv = p.getInventory();
+        this.fakeBlocks = new ArrayList<FakeBlock>();
+        p.getInventory().clear();
+        p.sendMessage("§aLoading editor...");
+        c = null;
+        r.frontline.forEach(f -> {
+            this.fakeBlocks.add(new FakeBlock(f.node.loc.clone().add(0, 315-f.node.loc.getBlockY(), 0), Material.DIAMOND_BLOCK.createBlockData()));
+            c = f;
+            while(c.prevNode != null) {
+                if(c.prevNode != null) c = c.prevNode;
+                if(c.prevNode == null || c.prevNode.con == null) break;
+                for(int i = 0; i < (c.prevNode.con.locs.size() -1); i++) {
+                    drawLine(c.prevNode.con.locs.get(i), c.prevNode.con.locs.get(i+1), Material.GOLD_BLOCK);
+                }
+                //drawLine(c.node.loc, c.prevNode.node.loc, Material.GOLD_BLOCK);
+            }
+        });
+    }
+
+    public void cancel(Player p) {
+        BlockData a = Material.AIR.createBlockData();
+        this.fakeBlocks.forEach(c -> {
+            p.sendBlockChange(c.l, a);
+        });
+        this.fakeBlocks.clear();
+        TrainCarts.plugin.speedProgress.remove(p.getName());
+        p.sendMessage("§cCancelled changes.");
+    }
+
+    public void drawLine(Location st, Location e, Material t) {
+        Double dx = e.getX() - st.getX();
+        Double dz = e.getZ() - st.getZ();
+        Location s = st.clone();
+        s.add(0, 315-st.getBlockY(), 0);
+        BlockData d = t.createBlockData();
+        if(Math.abs(dx) > Math.abs(dz)) {
+            if(dx > 0) {
+                for(Double i = st.getX(); i < e.getX(); i++) {
+                    this.player.sendBlockChange(s.add(dx/Math.abs(dx), 0, Math.round(dz/Math.abs(dx))), d); 
+                    //if(!this.fakeBlocks.stream().anyMatch(z -> z.l.equals(s)))  
+                    this.fakeBlocks.add(new FakeBlock(s.clone(), d));
+                }
+            } else {
+                for(Double i = st.getX(); i > e.getX(); i--) {
+                    this.player.sendBlockChange(s.add(dx/Math.abs(dx), 0, Math.round(dz/Math.abs(dx))), d); 
+                    //if(!this.fakeBlocks.stream().anyMatch(z -> z.l.equals(s)))  
+                    this.fakeBlocks.add(new FakeBlock(s.clone(), d));
+                }
+
+            }   
+        } else {
+            if(dz > 0) {
+                for(Double i = st.getZ(); i < e.getZ(); i++) {
+                    this.player.sendBlockChange(s.add(Math.round(dx/Math.abs(dz)), 0, dz/Math.abs(dz)), d); 
+                    //TrainCarts.plugin.getLogger().log(Level.INFO, "Loading block at " + s + ". Match - " + this.fakeBlocks.stream().anyMatch(z -> z.l.equals(s)));
+                    //if(!this.fakeBlocks.stream().anyMatch(z -> z.l.equals(s)))  
+                    this.fakeBlocks.add(new FakeBlock(s.clone(), d));
+                }
+            } else {
+                for(Double i = st.getZ(); i > e.getZ(); i--) {
+                    this.player.sendBlockChange(s.add(Math.round(dx/Math.abs(dz)), 0, dz/Math.abs(dz)), d); 
+                    //if(!this.fakeBlocks.stream().anyMatch(z -> z.l.equals(s)))  
+                    this.fakeBlocks.add(new FakeBlock(s.clone(), d));
+                }
+            }
+        }
+    }
+    private Location p;
+    public void tick() {
+        p = this.player.getLocation();
+        /*this.route.nodes.forEach(n -> {
+            if(n.loc.distance(p) < 30) {
+                Location l = n.loc.clone();
+                l.add(0, 383-l.getBlockY(), 0);
+                BlockData d = Material.DIAMOND_BLOCK.createBlockData();
+                this.player.sendBlockChange(l, d); 
+                if(this.fakeBlocks.stream().anyMatch(z -> z.l.equals(l))) this.fakeBlocks.add(new FakeBlock(l, d));
+            }
+        });*/
+        this.fakeBlocks.forEach(b -> {
+            if(b.l.distance(p) < 50) {
+                //TrainCarts.plugin.getLogger().log(Level.INFO, "Loading block at " + b.l + " - " + b.t);
+                this.player.sendBlockChange(b.l, b.t);   
+            }
+        });
+    }
+    
+    private class FakeBlock {
+        private BlockData t;
+        private Location l;
+        public FakeBlock(Location l, BlockData t) {
+            this.t = t;
+            this.l = l;
+        }
+    }
+}

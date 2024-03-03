@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines;
 import com.movies22.cashcraft.tc.api.MinecartMember;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
-import com.movies22.cashcraft.tc.controller.PisController.PIS;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
+import com.movies22.cashcraft.tc.pis.PIS;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.api.Station;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
@@ -59,16 +59,16 @@ public class MainServer {
 			plat = plat + "\"" + p + "\"";
 			i++;
 		}
-		for(SignActionPlatform p2 : s.platforms.values()) {
+		plat = plat + "]";
+		/*for(SignActionPlatform p2 : s.platforms.values()) {
 			for(PIS pis : p2.pis.values()) {
 				if(x > pis.delay) {
 					x = pis.delay;
 					x2 = pis.name.charAt(-1);
 				}
 			};
-		}
-		plat = plat + "]";
-		return "{\"name\":\"" + s.name + "\",\"code\":\"" + s.code + "\",\"lines\":" + getOsi(s.osi) + ", \"platforms\":" + plat + ", \"nextTrain\":" + x + ", \"nextTrainChar\":\"" + String.valueOf(x2) + "\"}";
+		}*/
+		return "{\"name\":\"" + s.name + "\",\"code\":\"" + s.code + "\",\"lines\":" + getOsi(s.osi) + ", \"platforms\":" + plat + "}";
 	}
 	
 	public String getTrainInfo(MinecartGroup s) {
@@ -107,6 +107,7 @@ public class MainServer {
 			stopsR = stopsR + "\"" + p.node.loc.getBlockX() + "/" + p.node.loc.getBlockZ() + "\"";
 		}
 		stops = stops + "]";
+		stopsR = stopsR + "]";
 		return "{\"name\":\"" + s.name + "\",\"line\":\"" + s._line.getName() + "\",\"reverse\":\"" + s.reverse + "\", \"stops\":" + stops + ", \"stopsLoc\":" + stopsR+ "}";
 	}
 	

@@ -10,8 +10,8 @@ import org.bukkit.entity.Player;
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.Depot;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
 import com.movies22.cashcraft.tc.utils.Guides;
 
 import net.md_5.bungee.api.ChatColor;

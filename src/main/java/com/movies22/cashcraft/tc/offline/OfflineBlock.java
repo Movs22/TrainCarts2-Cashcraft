@@ -29,10 +29,12 @@ public class OfflineBlock implements Block {
     private Material type;
     private OfflineLocation loc;
     private BlockState state;
+    private BlockData data;
     public OfflineBlock(Block b, OfflineLocation l) {
         this.type = b.getType();
         this.loc = l;
         this.state = b.getState();
+        this.data = b.getBlockData();
     }
 
     @Override
@@ -97,8 +99,7 @@ public class OfflineBlock implements Block {
 
     @Override
     public BlockData getBlockData() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getBlockData'");
+        return this.data;
     }
 
     @Override
@@ -192,7 +193,7 @@ public class OfflineBlock implements Block {
     }
 
     @Override
-    public Location getLocation() {
+    public OfflineLocation getLocation() {
         return this.loc;
     }
 
@@ -323,14 +324,14 @@ public class OfflineBlock implements Block {
 
     @Override
     public void setBlockData(BlockData arg0) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setBlockData'");
+        this.data = arg0;
+        this.state.setBlockData(this.data);
     }
 
     @Override
     public void setBlockData(BlockData arg0, boolean arg1) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setBlockData'");
+        this.data = arg0;
+        this.state.setBlockData(this.data);
     }
 
     @Override

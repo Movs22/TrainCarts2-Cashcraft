@@ -158,12 +158,14 @@ public class VirtualMinecart implements Minecart {
 
 	public void syncY(Double y) {
 		if(this.ent == null) {
+			if(y == 0 || y == null) return;
 			this.loc.setY(y);
 		}
 	}
 
 	public void changeY(Double y) {
 		if(this.ent == null) {
+			if(y == 0 || y == null) return;
 			this.loc.add(0, y, 0);
 		}
 	}
@@ -219,16 +221,16 @@ public class VirtualMinecart implements Minecart {
 			if(b) {
 				Location l = this.loc.clone();
 					switch(this.pivot.facing) {
-						case EAST:
+						case WEST:
 							l.add(this.offset, 0, 0);
 							break;
-						case NORTH:
+						case SOUTH:
 							l.subtract(0, 0, this.offset);
 							break;
-						case SOUTH:
+						case NORTH:
 							l.add(0, 0, this.offset);
 							break;
-						case WEST:
+						case EAST:
 							l.subtract(this.offset, 0, 0);
 							break;
 						default:
@@ -243,16 +245,16 @@ public class VirtualMinecart implements Minecart {
 			if(b) {
 				Location l = this.pivot.getLocation().clone();
 					switch(this.pivot.facing) {
-						case EAST:
+						case WEST:
 							l.add(this.offset, 0, 0);
 							break;
-						case NORTH:
+						case SOUTH:
 							l.subtract(0, 0, this.offset);
 							break;
-						case SOUTH:
+						case NORTH:
 							l.add(0, 0, this.offset);
 							break;
-						case WEST:
+						case EAST:
 							l.subtract(this.offset, 0, 0);
 							break;
 						default:

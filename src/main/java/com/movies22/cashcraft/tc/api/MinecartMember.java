@@ -9,11 +9,12 @@ import org.bukkit.entity.Minecart;
 import org.bukkit.entity.TextDisplay;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathOperation;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathOperation;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
+import com.movies22.cashcraft.tc.signactions.SignActionSwitcher;
 
 public class MinecartMember implements Comparable<MinecartMember> {
 	private MinecartGroup group;
@@ -21,7 +22,7 @@ public class MinecartMember implements Comparable<MinecartMember> {
 	public Double _mod = 1.0;
 	public Double currentSpeed = 0.0;
 	private List<PathOperation> route = null;
-	public Double _targetSpeed = 0.4;
+	public Double _targetSpeed = 0.6;
 	public PathNode prevNode = null;
 	public int index;
 	public TextDisplay destination;
@@ -40,8 +41,12 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		this.spawned = false;
 		if (i == 0) {
 			this.setEntity(new VirtualMinecart(e, this, 0.0d));
+		} else if(i == g._getLength()/2 && g.doubleUnit == true) {
+			this.setEntity(new VirtualMinecart(e, group.head(), g._getLength()/2 * 1.2d + 1.6d));
+		} else if(i < g._getLength()/2) {
+			this.setEntity(new VirtualMinecart(e, group.head(), i * 1.2d));
 		} else {
-			this.setEntity(new VirtualMinecart(e, group.head(), i * 1.5d));
+			this.setEntity(new VirtualMinecart(e, group.head(), (i - 1) * 1.2d + 1.6d));
 		}
 		TrainCarts.plugin.MemberController.addMember(e.getUniqueId(), this);
 	}

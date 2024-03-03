@@ -1,4 +1,4 @@
-package com.movies22.cashcraft.tc.PathFinding;
+package com.movies22.cashcraft.tc.pathFinding;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,7 +10,9 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Rail;
+import org.bukkit.entity.Player;
 
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
@@ -93,6 +95,36 @@ public class PathNode {
 
 	public void setLine(int i, String s) {
 		this.txt.set(i, s);
+	}
+
+	public int manhatamDistance(Location l) {
+		return Math.abs(l.getBlockX() - this.loc.getBlockX()) + Math.abs(l.getBlockZ() - this.loc.getBlockZ());
+	}
+
+	public void renderConnections(Player p) {
+		this.connections.forEach(con -> {
+			BlockData d;
+			switch(con.facing) {
+				case NORTH:
+					d = Material.RED_CONCRETE.createBlockData();
+					break;
+				case EAST:
+					d = Material.YELLOW_CONCRETE.createBlockData();
+					break;
+				case SOUTH:
+					d = Material.GREEN_CONCRETE.createBlockData();
+					break;
+				case WEST:
+					d = Material.BLUE_CONCRETE.createBlockData();
+					break;
+				default:
+					d = Material.BEDROCK.createBlockData();
+					break;
+			}
+			con.locs.forEach(loc -> {
+				p.sendBlockChange(loc, d);
+			});
+		});
 	}
 
 	public <T extends SignAction> T setAction(T a) {
@@ -193,28 +225,28 @@ public class PathNode {
 		}
 		//north
 		a.subtract(0, 0, 1);
-		Material b = a.getBlock().getBlockData().getMaterial();
+		Material b = a.getBlock().getType();
 		if ((b == Material.RAIL || b == Material.POWERED_RAIL) && !this.facings.contains(BlockFace.NORTH)) {
 			this.facings.add(BlockFace.NORTH);
 			this.connections.add(new PathOperation(this, null, BlockFace.NORTH));
 		};
 		//east
 		a.add(1, 0, 1);
-		b = a.getBlock().getBlockData().getMaterial();
+		b = a.getBlock().getType();
 		if ((b == Material.RAIL || b == Material.POWERED_RAIL) && !this.facings.contains(BlockFace.EAST)) {
 			this.facings.add(BlockFace.EAST);
 			this.connections.add(new PathOperation(this, null, BlockFace.EAST));
 		};
 		//south
 		a.add(-1, 0, 1);
-		b = a.getBlock().getBlockData().getMaterial();
+		b = a.getBlock().getType();
 		if ((b == Material.RAIL || b == Material.POWERED_RAIL) && !this.facings.contains(BlockFace.SOUTH)) {
 			this.facings.add(BlockFace.SOUTH);
 			this.connections.add(new PathOperation(this, null, BlockFace.SOUTH));
 		};
 		//west
 		a.subtract(1, 0, 1);
-		b = a.getBlock().getBlockData().getMaterial();
+		b = a.getBlock().getType();
 		if ((b == Material.RAIL || b == Material.POWERED_RAIL) && !this.facings.contains(BlockFace.WEST)) {
 			this.facings.add(BlockFace.WEST);
 			this.connections.add(new PathOperation(this, null, BlockFace.WEST));

@@ -278,7 +278,7 @@
                     <failOnError>false</failOnError>
                     <doclint>none</doclint>
                     <quiet>true</quiet>
-                    <source>8</source>
+                    <source>1.8</source>
                 </configuration>
                 <executions>
                     <execution>

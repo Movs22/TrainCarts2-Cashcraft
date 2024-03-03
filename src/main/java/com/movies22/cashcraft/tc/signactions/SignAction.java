@@ -10,9 +10,9 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
 
 public class SignAction implements Cloneable {
 	
@@ -38,6 +38,9 @@ public class SignAction implements Cloneable {
     public HashMap<PathNode, PathRoute> rcache = new HashMap<PathNode, PathRoute>();
     private String s;
 	public PathRoute getRoute(PathNode e) {
+		return getRoute(e, false);
+	}
+	public PathRoute getRoute(PathNode e, Boolean skip) {
 		PathRoute r = this.rcache.get(e);
 		if(r == null) {
 			List<PathNode> a = new ArrayList<PathNode>();
@@ -49,8 +52,19 @@ public class SignAction implements Cloneable {
 			}
 			r = new PathRoute(s + "CACHED ROUTE/" + e.getLocationStr() + "]", a, TrainCarts.plugin.global);
 			r.calculate();
+			if(skip) {
+				for(int i = 0; i < (r.stops.size()-1); i++) {
+					r.stops.remove(0);
+				}
+			}
+			this.rcache.put(e, r);
 			return r.clone();
 		} else {
+			if(skip) {	
+				for(int i = 0; i < (r.stops.size()-1); i++) {
+					r.stops.remove(0);
+				}
+			}
 			return r.clone();
 		}
 	}

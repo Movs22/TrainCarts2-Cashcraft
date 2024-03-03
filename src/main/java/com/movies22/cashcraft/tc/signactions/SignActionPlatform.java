@@ -17,7 +17,10 @@ import org.bukkit.util.Vector;
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.api.Station;
-import com.movies22.cashcraft.tc.controller.PisController;
+import com.movies22.cashcraft.tc.pis.DynamicPIS;
+import com.movies22.cashcraft.tc.pis.PIS;
+import com.movies22.cashcraft.tc.pis.PisController;
+import com.movies22.cashcraft.tc.pis.PisMode;
 import com.movies22.cashcraft.tc.utils.Guides;
 import com.movies22.cashcraft.tc.utils.StationAnnouncements;
 
@@ -38,7 +41,9 @@ public class SignActionPlatform extends SignAction {
 	public boolean inverted = false;
 	private Character headcode;
 	public boolean reverse = false;
-	public HashMap<Character, PisController.PIS> pis = new HashMap<Character, PisController.PIS>();
+	public HashMap<Character, PIS> pis = new HashMap<Character, PIS>();
+	public DynamicPIS dynPis;
+	public PisMode mode;
 
 	@Override
 	public SignActionPlatform clone() {
@@ -55,7 +60,8 @@ public class SignActionPlatform extends SignAction {
 		a.inverted = false;
 		a.headcode = null;
 		a.reverse = false;
-		a.pis = new HashMap<Character, PisController.PIS>();
+		a.mode = PisMode.NORMAL;
+		a.pis = new HashMap<Character, PIS>();
 		return a;
 	}
 
@@ -84,20 +90,23 @@ public class SignActionPlatform extends SignAction {
 			group.currentRoute.stops.remove(0);
 			return true;
 		}
-		group.head().facing = this.node.direction;
 		if (group.currentRoute.stops.size() > 0 && group.currentRoute.stops.get(0).equals(this)) {
+			group.head().facing = this.node.direction;
 			group.canProceed = false;
 			stops = group.currentRoute.stops.size();
+			group.prevStop = this;
 			group.prevTS = group.head()._targetSpeed;
 			if (group.currentRoute.stops.size() <= 1) {
 				if (this.reverse) {
-					group.unVirtualize(true);
+					// group.unVirtualize(true);
 					group.loadNextRoute(false, true);
+					group.head().facing = this.node.direction.getOppositeFace();
+					group.tail().facing = this.node.direction.getOppositeFace();
+					group.head().getEntity().syncPos(this.node.loc);
 					group.reverse();
 					group.getMembers().forEach(m -> {
 						m.proceedTo(this.node.getLocation());
 					});
-					group.head().facing = this.node.direction.getOppositeFace();
 				} else {
 					group.loadNextRoute(true);
 				}
@@ -107,7 +116,7 @@ public class SignActionPlatform extends SignAction {
 				m.currentSpeed = 0.0d;
 				m._targetSpeed = 0.0d;
 			});
-			PisController.PIS pis;
+			PIS pis;
 			if (this.pis.get(headcode) != null) {
 				pis = this.pis.get(headcode);
 			} else {
@@ -116,6 +125,10 @@ public class SignActionPlatform extends SignAction {
 			}
 			long dur = this.duration;
 			pis.setArrived(true);
+			if (this.mode == PisMode.DYNAMIC) {
+				this.dynPis.addTimer(headcode.toString(), this.station, group.nextTrain, group.getLineColour());
+				this.dynPis.setArrived(headcode.toString(), this.station, true, group.getLineColour());
+			}
 			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode)
 					.addTimer(group.nextTrain);
 			pis.delay = 0;
@@ -123,42 +136,46 @@ public class SignActionPlatform extends SignAction {
 			n = group.currentRoute.name;
 			if (!group.virtualized) {
 				this.setLights(Material.VERDANT_FROGLIGHT);
-				List<String> ann = new ArrayList<String>();
-				String c = group.getLine().getChar();
-				ann.add("This station is " + this.station.name + ".");
-				if (this.station.osi != c && this.station.osi != "" && this.station.osi.length() > 1) {
-					ann.add(StationAnnouncements.parseMetro(this.station.osi, group.getLine()));
-				}
-				if (this.station.hosi != null && !this.station.hosi.equals("")) {
-					ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 1)));
-				}
-				/*if (this.station.station != "") {
-					String s = this.station.generateConnection(group.getLine());
-					ann.add(s);
-				}*/
-				if (stops == 1 && !group.getHeadcode().startsWith("0")) {
-					ann.add("This train terminates here. All change please.");
-				}
-				group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
-				ann.remove(0);
-				groupAnnounceTask = new Timer();
-				groupAnnounceTask.schedule(
-						new java.util.TimerTask() {
-							@Override
-							public void run() {
-								if (ann.size() > 0) {
-									if (ann.get(0) != null) {
-										group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
+				if (!group.getLine().getName().startsWith("!")) {
+					List<String> ann = new ArrayList<String>();
+					String c = group.getLine().getChar();
+					ann.add("This station is " + this.station.name + ".");
+					if (this.station.osi != c && this.station.osi != "" && this.station.osi.length() > 1) {
+						ann.add(StationAnnouncements.parseMetro(this.station.osi, group.getLine()));
+					}
+					if (this.station.hosi != null && !this.station.hosi.equals("")) {
+						ann.add(StationAnnouncements.parseRail(this.station.hosi, group.getLine(), (ann.size() > 1)));
+					}
+					/*
+					 * if (this.station.station != "") {
+					 * String s = this.station.generateConnection(group.getLine());
+					 * ann.add(s);
+					 * }
+					 */
+					if (stops == 1 && !group.getHeadcode().startsWith("0")) {
+						ann.add("This train terminates here. All change please.");
+					}
+					group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
+					ann.remove(0);
+					groupAnnounceTask = new Timer();
+					groupAnnounceTask.schedule(
+							new java.util.TimerTask() {
+								@Override
+								public void run() {
+									if (ann.size() > 0) {
+										if (ann.get(0) != null) {
+											group.announce(ann.get(0), false, ann.get(0).contains("{\"text"));
+										}
+										;
+										ann.remove(0);
+									} else {
+										this.cancel();
+										groupAnnounceTask = null;
 									}
-									;
-									ann.remove(0);
-								} else {
-									this.cancel();
-									groupAnnounceTask = null;
 								}
-							}
-						},
-						2500L, 2500L);
+							},
+							2500L, 2500L);
+				}
 			}
 			new java.util.Timer().schedule(
 					new java.util.TimerTask() {
@@ -189,11 +206,16 @@ public class SignActionPlatform extends SignAction {
 		}
 		if (TrainCarts.plugin.PisController != null) {
 			TrainCarts.plugin.PisController.getPis(this.station.code + this.platform + headcode).setArrived(false);
+			if (this.mode == PisMode.DYNAMIC) {
+				this.dynPis.setArrived(headcode.toString(), this.station, false, g.getLineColour());
+			}
 		}
 		return;
 	}
 
 	public Boolean exit(MinecartGroup group) {
+		if (group.prevStop == null || !group.prevStop.equals(this))
+			return true;
 		if (!group.virtualized) {
 			this.setLights(Material.PEARLESCENT_FROGLIGHT);
 		}
@@ -201,8 +223,11 @@ public class SignActionPlatform extends SignAction {
 			group.destroy();
 		}
 		if (!group.currentRoute._line.getName().equals("#GLOBAL") && group.currentRoute.stops.size() > 0) {
-			group.announce("This is a " + group.currentRoute._line.getName() + " Line service to "
-					+ group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
+			if (!group.getLine().getName().startsWith("!")) {
+				group.announce("This is " + (group.currentRoute._line.getName().equals("Airport") ? "the" : "a") + group.currentRoute._line.getName() + " "
+						+ (group.currentRoute._line.getName().equals("Airport") ? "Shuttle" : "Line service") + " to "
+						+ group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
+			}
 		} else {
 			group.eject();
 			group.destroy();
@@ -210,7 +235,7 @@ public class SignActionPlatform extends SignAction {
 		if (group.currentRoute == null) {
 			return false;
 		}
-		if (!group.currentRoute.name.equals("[CACHED ROUTE]")) {
+		if (!group.currentRoute.name.equals("[CACHED ROUTE]") && !group.getLine().getName().startsWith("!")) {
 			TimerTask t = new java.util.TimerTask() {
 				@Override
 				public void run() {
@@ -262,14 +287,18 @@ public class SignActionPlatform extends SignAction {
 				}
 				return;
 			}
-			String[] c = a[4].split("/");
+			String[] m = a[4].split(":");
+			if (m[0].equals("dyn")) {
+				this.mode = PisMode.DYNAMIC;
+				this.dynPis = new DynamicPIS((m.length > 1 ? m[1] : this.station.code), this.station.displayName);
+			}
 			if (a.length > 6) {
 				if (a[6].equals("R")) {
 					this.reverse = true;
 				}
 
 			}
-			this.offset = new Vector(Integer.valueOf(c[0]), Integer.valueOf(c[1]), Integer.valueOf(c[2]));
+			this.offset = new Vector(0, 0, 0);
 			Vector offset;
 			Vector addition;
 			switch (this.node.direction) {
@@ -298,19 +327,13 @@ public class SignActionPlatform extends SignAction {
 			this.doors = Integer.valueOf(a[5]);
 			Location z = this.sign.getBlock().getLocation().clone();
 			Vector addition2 = addition.clone().divide(new Vector(3, 3, 3));
-			Location light = z.subtract(offset).add(0, 2, 0);
-			if (light.getBlock().getType().equals(Material.JIGSAW)
-					|| light.getBlock().getType().equals(Material.PUMPKIN)
-					|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
-					|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+			Location light = z.clone().subtract(offset).add(0, 2, 0);
+			if (light.getBlock().getType().equals(Material.JIGSAW)) {
 				doorLocs = new ArrayList<Location>();
 				lightLocs = new ArrayList<Location>();
 				lightLocs.add(light.clone().subtract(addition2));
 				for (int i = 0; i < this.doors; i++) {
-					if (light.getBlock().getType().equals(Material.JIGSAW)
-							|| light.getBlock().getType().equals(Material.PUMPKIN)
-							|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
-							|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+					if (light.getBlock().getType().equals(Material.JIGSAW)) {
 						doorLocs.add(light.clone());
 						light.clone().subtract(0, 1, 0).getBlock().setType(Material.AIR);
 					} else {
@@ -334,21 +357,14 @@ public class SignActionPlatform extends SignAction {
 				lightLocs.forEach(loc -> {
 					loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
 				});
-				return;
 			}
-			light.add(offset).add(offset).subtract(0, 2, 0);
-			if (light.getBlock().getType().equals(Material.JIGSAW)
-					|| light.getBlock().getType().equals(Material.PUMPKIN)
-					|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
-					|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
-				doorLocs = new ArrayList<Location>();
-				lightLocs = new ArrayList<Location>();
+			light = z.add(offset);
+			if (light.getBlock().getType().equals(Material.JIGSAW)) {
+				// doorLocs = new ArrayList<Location>();
+				// lightLocs = new ArrayList<Location>();
 				lightLocs.add(light.clone().subtract(addition2));
 				for (int i = 0; i < this.doors; i++) {
-					if (light.getBlock().getType().equals(Material.JIGSAW)
-							|| light.getBlock().getType().equals(Material.PUMPKIN)
-							|| light.getBlock().getType().equals(Material.VERDANT_FROGLIGHT)
-							|| light.getBlock().getType().equals(Material.PEARLESCENT_FROGLIGHT)) {
+					if (light.getBlock().getType().equals(Material.JIGSAW)) {
 						doorLocs.add(light.clone());
 						light.clone().subtract(0, 1, 0).getBlock().setType(Material.AIR);
 					} else {
@@ -372,9 +388,8 @@ public class SignActionPlatform extends SignAction {
 				lightLocs.forEach(loc -> {
 					loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
 				});
-
-				return;
 			}
+			this.setLights(Material.PEARLESCENT_FROGLIGHT);
 		} catch (IndexOutOfBoundsException e) {
 			TrainCarts.plugin.getLogger().log(Level.WARNING, this.content + " is an invalid SignActionPlatform sign.");
 			this.platform = null;
@@ -399,12 +414,15 @@ public class SignActionPlatform extends SignAction {
 
 	@Override
 	public Double getSpeedLimit(MinecartGroup g) {
-		if (!this.station.closed) {
+		if (!this.station.closed && g.currentRoute.stops != null && g.currentRoute.stops.size() > 0
+				&& g.currentRoute.stops.get(0).equals(this)) {
 			return 0.0;
 		} else {
 			return null;
 		}
 	}
+
+
 
 	@Override
 	public void handleBuild(Player p) {

@@ -1,4 +1,4 @@
-package com.movies22.cashcraft.tc.PathFinding;
+package com.movies22.cashcraft.tc.pathFinding;
 
 import java.util.HashMap;
 import java.util.Iterator;

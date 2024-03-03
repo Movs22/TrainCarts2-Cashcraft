@@ -1,18 +1,16 @@
-package com.movies22.cashcraft.tc.PathFinding;
+package com.movies22.cashcraft.tc.pathFinding;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Rail;
 
 import com.movies22.cashcraft.tc.TrainCarts;
 import com.movies22.cashcraft.tc.signactions.SignAction;
-import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
 public class PathOperation implements Cloneable {
 	private PathNode start;
@@ -26,7 +24,7 @@ public class PathOperation implements Cloneable {
 		locs.add(n.loc);
 		if (e == null) {
 			try {
-				this.calculate(1000);
+				this.calculate(2000);
 			} catch(StackOverflowError z) {
 				TrainCarts.plugin.getLogger().log(Level.INFO, "FAILED at " + n.getLocationStr() );
 			}
@@ -147,6 +145,7 @@ public class PathOperation implements Cloneable {
 					
 				switch (c.getShape()) {
 				case ASCENDING_EAST:
+					//locs.add(b.clone());
 					if (f == BlockFace.EAST) {
 						// UP - east>west
 						b.add(1, 0, 0);
@@ -158,6 +157,7 @@ public class PathOperation implements Cloneable {
 					}
 					break;
 				case ASCENDING_NORTH:
+					//locs.add(b.clone());
 					if (f == BlockFace.NORTH) {
 						// UP - north>south
 						b.add(0, 0, -1);
@@ -169,6 +169,7 @@ public class PathOperation implements Cloneable {
 					}
 					break;
 				case ASCENDING_SOUTH:
+					//locs.add(b.clone());
 					if (f == BlockFace.SOUTH) {
 						// UP - south>north
 						b.add(0, 0, 1);
@@ -180,6 +181,7 @@ public class PathOperation implements Cloneable {
 					}
 					break;
 				case ASCENDING_WEST:
+					//locs.add(b.clone());
 					if (f == BlockFace.WEST) {
 						// UP - west>east
 						b.add(-1, 0, 0);

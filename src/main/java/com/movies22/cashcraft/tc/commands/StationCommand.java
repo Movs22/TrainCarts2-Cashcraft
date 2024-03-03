@@ -98,19 +98,19 @@ public class StationCommand implements CommandExecutor {
 					sender.sendMessage(ChatColor.GREEN + "Reseted the headcode letter of " + ChatColor.YELLOW + s.name + ChatColor.GREEN + ChatColor.GREEN + ".");
 					return true;
 				} else {
-					stationCheck = false;
+					//stationCheck = false;
 					TrainCarts.plugin.StationStore.Stations.values().forEach(station -> {
 						if(station.headcode != null ) {
 							if(station.headcode.equals(args[2])) {
 								sender.sendMessage(ChatColor.RED + "The headcode letter " + ChatColor.YELLOW + args[2] + ChatColor.RED + " is already in use by " +  ChatColor.YELLOW + station.name + ChatColor.RED + ".");
 								stationCheck = true;
-								return;
+								//return;
 							}
 						}
 					});
-					if(stationCheck) {
+					/*if(stationCheck) {
 						return true;
-					}
+					}*/
 					s.headcode = args[2];
 					s.canTerminate = true;
 					sender.sendMessage(ChatColor.GREEN + "The new headcode letter of " + ChatColor.YELLOW + s.name + ChatColor.GREEN + " is " + ChatColor.YELLOW + args[2] + ChatColor.GREEN + ".");

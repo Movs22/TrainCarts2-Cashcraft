@@ -7,9 +7,9 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathProvider;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathProvider;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
 
 public class MetroLines {
 	private HashMap<String, MetroLine> lines = new HashMap<String, MetroLine>();
@@ -70,7 +70,8 @@ public class MetroLines {
 		}
 		
 		public PathNode getNode(Location s) {
-			return this.nodes.get(s);
+			PathNode n = this.nodes.get(s);
+			return n;
 		}
 		
 		public HashMap<Location, PathNode> getNodes() {

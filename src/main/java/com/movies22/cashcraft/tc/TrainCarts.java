@@ -18,12 +18,11 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.Rail;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import com.bergerkiller.bukkit.common.Common;
 import com.bergerkiller.bukkit.common.PluginBase;
 import com.bergerkiller.bukkit.common.Task;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.Depot;
 import com.movies22.cashcraft.tc.api.MetroLines;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
@@ -35,12 +34,16 @@ import com.movies22.cashcraft.tc.controller.DepotController;
 import com.movies22.cashcraft.tc.controller.MinecartMemberController;
 import com.movies22.cashcraft.tc.controller.SignStore;
 import com.movies22.cashcraft.tc.controller.StationStore;
-import com.movies22.cashcraft.tc.controller.PisController;
 import com.movies22.cashcraft.tc.controller.PlayerController;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.webserver.MainServer;
 import com.movies22.cashcraft.tc.webserver.ServerThread;
 import com.movies22.cashcraft.tc.offline.*;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
+import com.movies22.cashcraft.tc.pis.PisController;
+import com.movies22.cashcraft.tc.progress.RouteProgress;
+import com.movies22.cashcraft.tc.progress.SpeedProgress;
 
 public class TrainCarts extends PluginBase {
 	public static TrainCarts plugin;
@@ -56,6 +59,10 @@ public class TrainCarts extends PluginBase {
 	public MainServer server;
 	public ServerThread serverThread;
 	public HashMap<World, OfflineWorld> offlineWorlds;
+
+	public HashMap<String, RouteProgress> playerProgress;
+	public HashMap<String, SpeedProgress> speedProgress;
+	//public HashMap<String, PathFindingProgress> pathFindingProgress;
 
 	public String version = "2.1";
 	public String mcVersion = "1.20.2";
@@ -75,9 +82,18 @@ public class TrainCarts extends PluginBase {
 	public Task memberLoad;
 	public Task playerUpdateTask;
 	public Timer pisUpdateTask;
-	
+	public Boolean debug = true;
 	@Override
 	public void enable() {
+		/*if(getServer().getWorld("Main1") != null && debug == true) {
+			getLogger().log(Level.SEVERE, "Attempted to load debug version in main server.");
+			getServer().getPluginManager().disablePlugin(this);
+			return;
+		}*/	
+		this.offlineWorlds = new HashMap<>();
+		this.playerProgress = new HashMap<String, RouteProgress>();
+		this.speedProgress = new HashMap<String, SpeedProgress>();
+		//this.pathFindingProgress = new HashMap<String, PathFindingProgress>();
 		World w = getServer().getWorld("Main1");
 		offlineWorlds.put(w, new OfflineWorld(w));
 		plugin.getLogger().log(Level.INFO, "Enabling TrainCarts...");
@@ -168,7 +184,7 @@ public class TrainCarts extends PluginBase {
 			while (scan.hasNext()) {
 				s = scan.next();
 				l = s.split("/");
-				loc = new Location(getServer().getWorld(l[0]), Double.parseDouble(l[1]), Double.parseDouble(l[2]),
+				loc = new Location(getServer().getWorld("Main1"), Double.parseDouble(l[1]), Double.parseDouble(l[2]),
 						Double.parseDouble(l[3]));
 				Block z = loc.getBlock();
 				if (z.getState() instanceof Sign) {
@@ -225,6 +241,7 @@ public class TrainCarts extends PluginBase {
 						break;
 					}
 					MetroLine aline = lines.createLine(name, colour);
+					aline.setChar(character);
 					for (String route : routes) {
 						String[] r = route.split(">");
 						String routeName = r[0];
@@ -238,7 +255,7 @@ public class TrainCarts extends PluginBase {
 							if (l2.length < 4) {
 								continue;
 							}
-							PathNode b = global.createNode(new Location(getServer().getWorld(l2[0]),
+							PathNode b = global.createNode(new Location(getServer().getWorld("Main1"),
 									Double.parseDouble(l2[1]), Double.parseDouble(l2[2]), Double.parseDouble(l2[3])));
 							aline.addNode(b);
 							b.line = aline;
@@ -256,7 +273,6 @@ public class TrainCarts extends PluginBase {
 						}
 						aline.addRoute(routeVar, routeName);
 					}
-					aline.setChar(character);
 					plugin.getLogger().log(Level.INFO,
 							"Loaded " + aline.getRoutes().size() + " routes to the " + aline.getName() + " line.");
 				} catch (FileNotFoundException e) {
@@ -340,6 +356,15 @@ public class TrainCarts extends PluginBase {
 				MemberController.getHeads().forEach(m -> {
 					m.getGroup().checkVirtualization();
 				});
+				playerProgress.values().forEach(z -> {
+					z.tick();
+				});
+				speedProgress.values().forEach(z -> {
+					z.tick();
+				});
+				/*pathFindingProgress.values().forEach(z -> {
+					z.tick();
+				});*/
 			}
 		};
 		memberMove = new Task(plugin) {
@@ -360,7 +385,7 @@ public class TrainCarts extends PluginBase {
 		spawnerTask.start(100L, 20L);
 		memberMove.start(100L, 2L);
 		memberLoad.start(100L, 100L);
-		playerUpdateTask.start(100L, 20L);
+		playerUpdateTask.start(100L, 5L);
 		
 		serverThread = new ServerThread(this.server);
 		serverThread.run();
@@ -373,6 +398,8 @@ public class TrainCarts extends PluginBase {
 	@Override
 	public void disable() {
 		listener = null;
+		this.offlineWorlds.clear();
+		this.offlineWorlds = null;
 		pisUpdateTask.cancel();
 		PisController.clear();
 		PisController = null;

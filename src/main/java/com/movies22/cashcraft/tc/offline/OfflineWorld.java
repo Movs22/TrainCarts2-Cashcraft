@@ -1,6 +1,7 @@
 package com.movies22.cashcraft.tc.offline;
 
 import org.bukkit.World;
+import org.bukkit.util.Vector;
 
 import java.util.HashMap;
 
@@ -21,4 +22,14 @@ public class OfflineWorld {
         }
         return b;
     }
+
+    public void removeBlock(Vector v) {
+        removeBlock(v.getBlockX(), v.getBlockY(), v.getBlockZ());
+    }
+
+    public void removeBlock(int x, int y, int z) {
+        blocks.remove(x + "/" + y + "/" + z);
+        return;
+    }
+
 }

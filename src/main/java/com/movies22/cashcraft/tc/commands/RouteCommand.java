@@ -1,8 +1,10 @@
 package com.movies22.cashcraft.tc.commands;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -10,11 +12,15 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
+import org.bukkit.entity.Player;
+
 import com.movies22.cashcraft.tc.TrainCarts;
-import com.movies22.cashcraft.tc.PathFinding.PathNode;
-import com.movies22.cashcraft.tc.PathFinding.PathRoute;
 import com.movies22.cashcraft.tc.api.MetroLines.MetroLine;
 import com.movies22.cashcraft.tc.controller.StationStore;
+import com.movies22.cashcraft.tc.pathFinding.PathNode;
+import com.movies22.cashcraft.tc.pathFinding.PathRoute;
+import com.movies22.cashcraft.tc.progress.RouteProgress;
+import com.movies22.cashcraft.tc.progress.SpeedProgress;
 import com.movies22.cashcraft.tc.api.Station;
 
 import net.md_5.bungee.api.ChatColor;
@@ -120,7 +126,53 @@ public class RouteCommand implements CommandExecutor {
 				msg = append(msg, footer);
 				sender.spigot().sendMessage(msg);
 				return true;
-			} else if (args[0].equals("list")) {
+			} else if (args[0].equals("speed")) {
+				if(!(sender instanceof Player)) {
+					sender.sendMessage(ChatColor.RED + "You can only run this command as a player!");
+					return true;
+				}
+				if(args.length < 2) {
+					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE + "/route speed [ROUTE]");
+					return true;
+				}
+				MetroLine l = TrainCarts.plugin.lines.getLine(args[1].split(":")[0]);
+				if(l == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find a metro line named " + ChatColor.YELLOW + args[1].split(":")[0] + ChatColor.RED + ".");
+					return true;
+				}
+				PathRoute r = l.getRoute(args[1].split(":")[1]);
+				if(r == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find a route named " + ChatColor.YELLOW + args[1].split(":")[1] + ChatColor.RED + " in the " + args[1] + " line.");
+					return true;
+				}
+				SpeedProgress rp = new SpeedProgress(((Player) sender), l);
+				TrainCarts.plugin.speedProgress.put(sender.getName(), rp);
+				sender.sendMessage(ChatColor.GREEN + "Route §e" + r.name + " §ahas been loaded.");
+				return true;
+			} /*else if (args[0].equals("pathfind")) {
+				if(!(sender instanceof Player)) {
+					sender.sendMessage(ChatColor.RED + "You can only run this command as a player!");
+					return true;
+				}
+				if(args.length < 2) {
+					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE + "/route pathfind [ROUTE]");
+					return true;
+				}
+				MetroLine l = TrainCarts.plugin.lines.getLine(args[1].split(":")[0]);
+				if(l == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find a metro line named " + ChatColor.YELLOW + args[1].split(":")[0] + ChatColor.RED + ".");
+					return true;
+				}
+				PathRoute r = l.getRoute(args[1].split(":")[1]);
+				if(r == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find a route named " + ChatColor.YELLOW + args[1].split(":")[1] + ChatColor.RED + " in the " + args[1] + " line.");
+					return true;
+				}
+				PathFindingProgress rp = new PathFindingProgress(((Player) sender), r);
+				TrainCarts.plugin.pathFindingProgress.put(sender.getName(), rp);
+				sender.sendMessage(ChatColor.GREEN + "Route §e" + r.name + " §ahas been loaded.");
+				return true;
+			} */else if (args[0].equals("list")) {
 				if(args.length < 2) {
 					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE + "/route list [LINE]");
 					return true;
@@ -201,6 +253,45 @@ public class RouteCommand implements CommandExecutor {
 				l.addRoute(r, args[2]);
 				sender.sendMessage(ChatColor.GREEN + "Created route " + ChatColor.YELLOW + args[2] + ChatColor.GREEN + " on the " + args[1] + " line with " + ChatColor.YELLOW + r.route.size() + ChatColor.GREEN + " connections.");
 				return true;
+			} else if(args[0].equals("ccreate")) {
+				if(!(sender instanceof Player)) {
+					sender.sendMessage(ChatColor.RED + "You can only run this command as a player!");
+					return true;
+				}
+				if(args.length < 4) {
+					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE + "/route ccreate [LINE] [ROUTE] [Start~X]");
+					return true;
+				}
+				MetroLine l = TrainCarts.plugin.lines.getLine(args[1]);
+				if(l == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find a metro line named " + ChatColor.YELLOW + args[1] + ChatColor.RED + ".");
+					return true;
+				}
+				PathRoute r = l.getRoute(args[2]);
+				if(r != null) {
+					sender.sendMessage(ChatColor.RED + "There's already a route named " + ChatColor.YELLOW + args[2] + ChatColor.RED + " in the " + args[1] + " line.");
+					return true;
+				}
+				StationStore s = TrainCarts.plugin.StationStore;
+				Station station = s.getFromCode(args[3].split("~")[0]);
+				if(station == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find the station/platform " + ChatColor.YELLOW + args[3] + ChatColor.RED + ".");
+					return true;
+				}
+				if(station.platforms.get(args[3].split("~")[1]) == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find the platform " + ChatColor.YELLOW + args[3].split("~")[1] + ChatColor.RED + " at " + args[3] + ".");
+					return true;
+				}
+				PathNode stationN = station.platforms.get(args[3].split("~")[1]).node;
+				if(stationN == null) {
+					sender.sendMessage(ChatColor.RED + "Couldn't find the platform " + ChatColor.YELLOW + args[3].split("~")[1] + ChatColor.RED + " at " + args[3] + ".");
+					return true;
+				}
+				((Player) sender).teleport(stationN.loc);
+				RouteProgress rp = new RouteProgress(((Player) sender), stationN, l, args[2]);
+				TrainCarts.plugin.playerProgress.put(sender.getName(), rp);
+				sender.sendMessage(ChatColor.GREEN + "Started creation of route " + ChatColor.YELLOW + args[2] + ChatColor.GREEN + " on the " + args[1] + " line. Left click to add a node and right click to finish the route. Send \"Cancel\" to cancel the route creation.");
+				return true;
 			} else if(args[0].equals("remove")) {
 				if(args.length < 3) {
 					sender.sendMessage(ChatColor.RED + "Missing arguments: " + ChatColor.WHITE + "/route remove [LINE] [ROUTE]");
@@ -270,12 +361,13 @@ public class RouteCommand implements CommandExecutor {
 			ArrayList<String> arguments2 = new ArrayList<String>();
 			if (args.length == 1 && sender.isOp()) {
 				arguments.add("create");
+				arguments.add("ccreate");
 				arguments.add("remove");
 				arguments.add("list");
 				arguments.add("reroute");
 				arguments.add("info");
 				arguments.add("reverse");
-			} else if (args.length == 2 && sender.isOp() && (args[0].equals("create") || args[0].equals("reroute") || args[0].equals("remove") ||  args[0].equals("reverse") || args[0].equals("list"))) {
+			} else if (args.length == 2 && sender.isOp() && (args[0].equals("create") || args[0].equals("ccreate") || args[0].equals("reroute") || args[0].equals("remove") ||  args[0].equals("reverse") || args[0].equals("list"))) {
 				TrainCarts.plugin.lines.getLines().values().forEach(line -> {
 					arguments.add(line.getName());
 				});
@@ -287,6 +379,18 @@ public class RouteCommand implements CommandExecutor {
 					});
 				}
 			} else if (args.length > 3 && sender.isOp() && (args[0].equals("create"))) {
+				HashMap<String, Station> ss = TrainCarts.plugin.StationStore.Stations;
+				MetroLine l = TrainCarts.plugin.lines.getLine(args[1]);
+				if(l != null) {
+					ss.values().forEach(s -> {
+						s.platforms.values().forEach(plat -> {
+							if(plat.node.line.equals(l) || args[1] == "#GLOBAL") {
+								arguments.add(s.code + "~" + plat.platform);
+							}
+						});
+					});
+				}
+			} else if (args.length == 4 && sender.isOp() && (args[0].equals("ccreate"))) {
 				HashMap<String, Station> ss = TrainCarts.plugin.StationStore.Stations;
 				MetroLine l = TrainCarts.plugin.lines.getLine(args[1]);
 				if(l != null) {
