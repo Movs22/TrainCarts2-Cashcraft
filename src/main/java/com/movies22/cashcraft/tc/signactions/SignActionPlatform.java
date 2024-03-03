@@ -134,8 +134,8 @@ public class SignActionPlatform extends SignAction {
 			pis.delay = 0;
 			pis = null;
 			n = group.currentRoute.name;
+			this.setLights(Material.VERDANT_FROGLIGHT);
 			if (!group.virtualized) {
-				this.setLights(Material.VERDANT_FROGLIGHT);
 				if (!group.getLine().getName().startsWith("!")) {
 					List<String> ann = new ArrayList<String>();
 					String c = group.getLine().getChar();
@@ -224,7 +224,7 @@ public class SignActionPlatform extends SignAction {
 		}
 		if (!group.currentRoute._line.getName().equals("#GLOBAL") && group.currentRoute.stops.size() > 0) {
 			if (!group.getLine().getName().startsWith("!")) {
-				group.announce("This is " + (group.currentRoute._line.getName().equals("Airport") ? "the" : "a") + group.currentRoute._line.getName() + " "
+				group.announce("This is " + (group.currentRoute._line.getName().equals("Airport") ? "the " : "a ") + group.currentRoute._line.getName() + " "
 						+ (group.currentRoute._line.getName().equals("Airport") ? "Shuttle" : "Line service") + " to "
 						+ group.currentRoute.stops.get(group.currentRoute.stops.size() - 1).station.name + ".");
 			}
@@ -389,7 +389,7 @@ public class SignActionPlatform extends SignAction {
 					loc.getBlock().setType(Material.PEARLESCENT_FROGLIGHT);
 				});
 			}
-			this.setLights(Material.PEARLESCENT_FROGLIGHT);
+			//this.setLights(Material.PEARLESCENT_FROGLIGHT);
 		} catch (IndexOutOfBoundsException e) {
 			TrainCarts.plugin.getLogger().log(Level.WARNING, this.content + " is an invalid SignActionPlatform sign.");
 			this.platform = null;

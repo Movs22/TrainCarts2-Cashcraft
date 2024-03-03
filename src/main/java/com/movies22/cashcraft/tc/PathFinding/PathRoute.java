@@ -146,6 +146,11 @@ public class PathRoute implements Cloneable {
 						sD = a;
 						oX = Math.abs(e.getX() - c.getX());
 						oZ = Math.abs(e.getZ() - c.getZ());
+						/*if(con.getEndNode().equals(start)) {
+							checkednodes.add(connection.getEndNode().loc);
+							z++;
+							return;
+						};*/
 						connection = con.clone();
 						if (a < 1D) {
 							if(con.getEndNode().getAction() instanceof SignActionPlatform && !stops.contains((SignActionPlatform) con.getEndNode().getAction())) {
@@ -161,6 +166,11 @@ public class PathRoute implements Cloneable {
 									}
 								}
 							}
+							/*if(con.getEndNode().equals(start)) {
+								checkednodes.add(connection.getEndNode().loc);
+								z++;
+								return;
+							};*/
 							route.add(con);
 							finished = true;
 							return;
@@ -172,6 +182,11 @@ public class PathRoute implements Cloneable {
 			});
 			if(!finished && connection != null) {
 				if(start != null && connection.getEndNode() != null) {
+					/*if(connection.getEndNode().equals(start)) {
+						checkednodes.add(connection.getEndNode().loc);
+						z++;
+						continue;
+					}*/
 					route.add(connection);
 					checkednodes.add(connection.getEndNode().loc);
 					lastNode = start;
@@ -195,7 +210,7 @@ public class PathRoute implements Cloneable {
 			if(i > 1000) {
 				finished = true;
 				this._line.deleteRoute(this.name);
-				TrainCarts.plugin.getLogger().log(Level.WARNING, "Route " + this.name + " couldn't reach its destination."  + st.getLocationStr() + ">" + end.getLocationStr() + ".");
+				TrainCarts.plugin.getLogger().log(Level.WARNING, "Route " + this.name + " couldn't reach its destination."  + st.getLocationStr() + ">" + end.getLocationStr() + ". Ended at " + (lastNode == null ? "null" : lastNode.getLocationStr()));
 				break;
 			}
 		}

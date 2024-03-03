@@ -28,6 +28,7 @@ public class SignActionSwitcher extends SignAction {
 			return false;
 		}
 		t = null;
+		group.route.removeIf(a -> a.getEndNode().equals(this.node));
 		BlockFace s = group.head().facing;
 		Rail.Shape a;
 		if(group.head().getNextNode(1, true).equals(this.node)) {

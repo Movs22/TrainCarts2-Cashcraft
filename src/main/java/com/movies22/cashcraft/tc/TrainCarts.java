@@ -64,7 +64,7 @@ public class TrainCarts extends PluginBase {
 	public HashMap<String, SpeedProgress> speedProgress;
 	//public HashMap<String, PathFindingProgress> pathFindingProgress;
 
-	public String version = "2.1";
+	public String version = "2.1.1";
 	public String mcVersion = "1.20.2";
 	public String author = "Movies22";
 	@Override

@@ -126,7 +126,7 @@ public class TCListener implements Listener {
                 	TextComponent header = new TextComponent(ChatColor.WHITE + "" + ChatColor.BOLD + "= Destinations from " + b.getLocationStr() + " =\n");
     				msg = append(msg, header);
     				b.connections.forEach(con -> {
-    					TextComponent connection = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + con.facing + ChatColor.GREEN + " >> " + ChatColor.BOLD + "" + ChatColor.WHITE + con.opositeFacing + ChatColor.GREEN + " - " + ChatColor.YELLOW + con.getEndNode().getLocationStr() + "\n");
+    					TextComponent connection = new TextComponent(ChatColor.GREEN + " - " + ChatColor.BOLD + "" + ChatColor.WHITE + con.facing + ChatColor.GREEN + " >> " + ChatColor.BOLD + "" + ChatColor.WHITE + con.opositeFacing + ChatColor.GREEN + " - " + ChatColor.YELLOW + (con.getEndNode() != null ? con.getEndNode().getLocationStr() : "§cNULL§e") + "\n");
         				msg = append(msg, connection);
     				});
     				e.getPlayer().spigot().sendMessage(msg);

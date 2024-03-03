@@ -200,6 +200,7 @@ public class MinecartMember implements Comparable<MinecartMember> {
 				this.route.remove(0);
 			}
 		}
+		this.route.removeIf(a -> a.getEndNode().loc.equals(l));
 	}
 
 	public void setLocalRoute(List<PathOperation> route) {

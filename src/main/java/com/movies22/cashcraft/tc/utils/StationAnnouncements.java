@@ -39,6 +39,10 @@ public class StationAnnouncements {
 			return "#86c4bf";
 		if(name.contains("$Beige"))
 			return "#fce6a7";
+		if(name.contains("$Grey"))
+			return "#AAAAAA";
+		if(name.contains("$Airport"))
+			return "#D17059";
 		if(name.startsWith("$")) 
 			return name.substring(1);
 		return name;
@@ -49,6 +53,11 @@ public class StationAnnouncements {
 	}
 	
 	public static String parseMetro(String string, MetroLine l, Boolean z) {
+		Boolean shuttle = false;
+		if(string.contains("S")) {
+			shuttle = true;
+			string.replace("S", "");
+		}
 		String color = l.getColour();
 		String result = "";
 		if(z) {
@@ -79,6 +88,8 @@ public class StationAnnouncements {
 				result = result + (", {\"text\":\"Red\",\"color\":\"" + convertColor("$Red") + "\"}");
 			} else if (string.charAt(i) == 'Y' && !l.getName().equals("Yellow")) {
 				result = result + (", {\"text\":\"Yellow\",\"color\":\"" + convertColor("$Yellow") + "\"}");
+			} else if (string.charAt(i) == 'E' && !l.getName().equals("Grey")) {
+				result = result + (", {\"text\":\"Grey\",\"color\":\"" + convertColor("$Grey") + "\"}");
 			} else {
 				if (b == string.length()) {
 						if(!z) {
@@ -100,6 +111,11 @@ public class StationAnnouncements {
 				a = ", ";
 			result = result + (", {\"text\":\"" + a + "\",\"color\":\"" + convertColor(color) + "\"}");
 			if (b == string.length() - 1 && !z) {
+				if(shuttle) {
+					result = result + (", {\"text\":\" and \",\"color\":\"" + convertColor(color) + "\"}");
+					result = result + (", {\"text\":\"Airport Shuttle\",\"color\":\"" + convertColor("$Airport") + "\"}");
+					result = result + (", {\"text\":\" services.\",\"color\":\"" + convertColor(color) + "\"}");
+				}
 				result = result + "]";
 			}
 			b += 1;

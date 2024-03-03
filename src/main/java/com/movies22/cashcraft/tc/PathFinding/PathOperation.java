@@ -145,7 +145,7 @@ public class PathOperation implements Cloneable {
 					
 				switch (c.getShape()) {
 				case ASCENDING_EAST:
-					//locs.add(b.clone());
+					locs.add(b.clone());
 					if (f == BlockFace.EAST) {
 						// UP - east>west
 						b.add(1, 0, 0);
@@ -157,7 +157,7 @@ public class PathOperation implements Cloneable {
 					}
 					break;
 				case ASCENDING_NORTH:
-					//locs.add(b.clone());
+					locs.add(b.clone());
 					if (f == BlockFace.NORTH) {
 						// UP - north>south
 						b.add(0, 0, -1);
@@ -169,7 +169,7 @@ public class PathOperation implements Cloneable {
 					}
 					break;
 				case ASCENDING_SOUTH:
-					//locs.add(b.clone());
+					locs.add(b.clone());
 					if (f == BlockFace.SOUTH) {
 						// UP - south>north
 						b.add(0, 0, 1);
@@ -181,7 +181,7 @@ public class PathOperation implements Cloneable {
 					}
 					break;
 				case ASCENDING_WEST:
-					//locs.add(b.clone());
+					locs.add(b.clone());
 					if (f == BlockFace.WEST) {
 						// UP - west>east
 						b.add(-1, 0, 0);
