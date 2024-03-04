@@ -233,7 +233,7 @@ public class MinecartMemberController extends BaseController {
 								b.ExitExecuted.remove(g);
 								m.prevNode = m.getNextNode();
 								m.lastAction = b;
-								//m.proceedTo(nextNode);
+								m.proceedTo(nextNode);
 								b.execute(g);
 								b.executed.add(g);
 								if (b.getSpeedLimit(g) != null) {
