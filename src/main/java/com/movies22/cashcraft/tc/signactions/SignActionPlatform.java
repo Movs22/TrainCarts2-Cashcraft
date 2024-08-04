@@ -102,7 +102,7 @@ public class SignActionPlatform extends SignAction {
 					group.loadNextRoute(false, true);
 					group.head().facing = this.node.direction.getOppositeFace();
 					group.tail().facing = this.node.direction.getOppositeFace();
-					group.head().getEntity().syncPos(this.node.loc);
+					group.head().getEntity().syncPos(this.node.loc.clone());
 					group.reverse();
 					group.getMembers().forEach(m -> {
 						m.proceedTo(this.node.getLocation());

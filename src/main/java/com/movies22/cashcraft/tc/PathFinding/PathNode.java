@@ -22,7 +22,7 @@ import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionPlatform;
 
 public class PathNode {
-	public Location loc;
+	public Location loc = null;
 	public Sign sign;
 	public MetroLine line;
 	public Rail rail;

@@ -28,9 +28,13 @@ public class SignActionSwitcher extends SignAction {
 			return false;
 		}
 		t = null;
+<<<<<<< Updated upstream
+=======
+		group.getRoute().removeIf(a -> a.getEndNode() == this.node);
+>>>>>>> Stashed changes
 		BlockFace s = group.head().facing;
 		Rail.Shape a;
-		if(group.head().getNextNode(1, true).equals(this.node)) {
+		/*if(group.head().getNextNode(1).equals(this.node)) {
 			try {
 				a = Rail.Shape.valueOf(s + "_" + s.getOppositeFace());
 			} catch(IllegalArgumentException e) {
@@ -42,14 +46,14 @@ public class SignActionSwitcher extends SignAction {
 					throw(e2);
 				}
 			} 
-		} else {
+		} else {*/
 			this.node.connections.forEach(con -> {
-				if(con.getEndNode() != null && (con.getEndNode().equals(group.head().getNextNode(0, true)) || con.getEndNode().equals(group.head().getNextNode(1, true)))) {
-				t = con;
+				if(con.getEndNode() != null && con.getEndNode() != this.node && (con.getEndNode().equals(group.head().getNextNode(0, true)) || con.getEndNode().equals(group.head().getNextNode(1, true)))) {
+					t = con;
 				}
 			});
 			if(t == null) {
-				TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: FAILED to find connection between " + group.head().getNextNode(1).getLocationStr() + " and " + s.getOppositeFace().toString());
+				TrainCarts.plugin.getLogger().log(Level.WARNING, "SignActionSwitcher: NO CONNECTION - FAILED to find connection between " + this.node.getLocationStr() + " >> " + group.head().getNextNode(1).getLocationStr() + " and " + s.getOppositeFace().toString());
 				group.destroy(Despawn.INVALID_HEADING);
 				return false;
 			}
@@ -78,9 +82,9 @@ public class SignActionSwitcher extends SignAction {
 					}
 				}
 			}
-		}
+		//}
 		if(a instanceof Rail.Shape) {
-			group.head().getEntity().syncPos(this.node.loc);
+			group.head().getEntity().syncPos(this.node.loc.clone());
 			group.head().facing = s.getOppositeFace();
 			this.node.rail.setShape(a);
 			Location l = this.node.loc;

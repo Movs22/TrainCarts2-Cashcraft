@@ -146,6 +146,14 @@ public class PathRoute implements Cloneable {
 						sD = a;
 						oX = Math.abs(e.getX() - c.getX());
 						oZ = Math.abs(e.getZ() - c.getZ());
+<<<<<<< Updated upstream
+=======
+						if(con.getEndNode().equals(start)) {
+							checkednodes.add(connection.getEndNode().loc);
+							z++;
+							return;
+						};
+>>>>>>> Stashed changes
 						connection = con.clone();
 						if (a < 1D) {
 							if(con.getEndNode().getAction() instanceof SignActionPlatform && !stops.contains((SignActionPlatform) con.getEndNode().getAction())) {
@@ -161,6 +169,14 @@ public class PathRoute implements Cloneable {
 									}
 								}
 							}
+<<<<<<< Updated upstream
+=======
+							if(con.getEndNode().equals(start)) {
+								checkednodes.add(connection.getEndNode().loc);
+								z++;
+								return;
+							};
+>>>>>>> Stashed changes
 							route.add(con);
 							finished = true;
 							return;

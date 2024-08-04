@@ -22,6 +22,7 @@ import com.movies22.cashcraft.tc.api.MinecartGroup;
 import com.movies22.cashcraft.tc.signactions.SignAction;
 import com.movies22.cashcraft.tc.signactions.SignActionBlocker;
 import com.movies22.cashcraft.tc.signactions.SignActionRBlocker;
+import com.movies22.cashcraft.tc.signactions.SignActionSwitcher;
 import com.movies22.cashcraft.tc.utils.Despawn;
 import com.movies22.cashcraft.tc.offline.*;
 import com.movies22.cashcraft.tc.pathFinding.PathNode;
@@ -203,7 +204,6 @@ public class MinecartMemberController extends BaseController {
 					}
 				}
 
-
 				if (nd < 10.0 && n.getAction().getSpeedLimit(g) != null && m._targetSpeed > 0.05) {
 					speed = Math.abs(m._targetSpeed - n.getAction().getSpeedLimit(g)) * ((nd + 2.0) / 12.0) + n.getAction().getSpeedLimit(g);
 					m.currentSpeed = speed;
@@ -224,10 +224,10 @@ public class MinecartMemberController extends BaseController {
 				if(!g.canProceed) return;
 
 				if (m._targetSpeed > 0.05) {
-					while (i < 5 && (ld < (0.5 + speed) || nd < (0.5 + speed))) {
-						if (nd < (0.5 + speed)) {
+					while (i < 5 && (ld < (1.0 + speed) || nd < (1.0 + speed))) {
+						if (nd < (1.0 + speed)) {
 							SignAction b = n.getAction();
-							if (!b.executed.contains(g) && !b.getClass().equals(SignActionBlocker.class) && !b.getClass().equals(SignActionRBlocker.class)) {
+							//if (!b.executed.contains(g) && !b.getClass().equals(SignActionBlocker.class) && !b.getClass().equals(SignActionRBlocker.class)) {
 								e.syncY(nextNode.getY());
 								e.syncPos(nextNode.clone());
 								b.ExitExecuted.remove(g);
@@ -246,9 +246,9 @@ public class MinecartMemberController extends BaseController {
 										mm._targetSpeed = s;
 									});
 								}
-							}
+							//}
 						}
-						if(ld >= (0.5 + speed)) {
+						if(ld >= (1.0 + speed)) {
 							break;
 						}
 						e.syncY(nextLoc.getY());
@@ -285,6 +285,7 @@ public class MinecartMemberController extends BaseController {
 						}
 						nd = l.distance(nextNode);
 						ld = l.distance(nextLoc);
+						break;
 					}
 				}
 				Double ts = m._targetSpeed;

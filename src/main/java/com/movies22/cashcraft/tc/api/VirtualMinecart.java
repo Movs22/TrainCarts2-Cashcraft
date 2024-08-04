@@ -286,7 +286,7 @@ public class VirtualMinecart implements Minecart {
 	}
 
 	public void syncPos(Location l) {
-		this.loc = l;
+		this.loc = l.clone();
 	}
 
 	@Override

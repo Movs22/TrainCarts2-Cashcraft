@@ -145,50 +145,86 @@ public class PathOperation implements Cloneable {
 					
 				switch (c.getShape()) {
 				case ASCENDING_EAST:
+<<<<<<< Updated upstream
 					//locs.add(b.clone());
+=======
+>>>>>>> Stashed changes
 					if (f == BlockFace.EAST) {
+						locs.add(b.clone());
 						// UP - east>west
-						b.add(1, 0, 0);
+						b.add(1, 1, 0);
+						locs.add(b.clone());
 						f = BlockFace.EAST;
 					} else {
+						//b.subtract(0, 1, 0);
+						locs.add(b.clone());
 						// DOWN - west>east
-						b.subtract(1, 0, 0);
+						b.add(1, 1, 0);
+						locs.add(b.clone());
+						b.subtract(2, 1, 0);
 						f = BlockFace.WEST;
 					}
 					break;
 				case ASCENDING_NORTH:
+<<<<<<< Updated upstream
 					//locs.add(b.clone());
+=======
+>>>>>>> Stashed changes
 					if (f == BlockFace.NORTH) {
-						// UP - north>south
-						b.add(0, 0, -1);
+						// UP - north>sout
+						locs.add(b.clone());
+						b.add(0, 1, -1);
+						locs.add(b.clone());
 						f = BlockFace.NORTH;
 					} else {
+						//b.subtract(0, 1, 0);
+						locs.add(b.clone());
 						// DOWN - south>north
-						b.subtract(0, 0, -1);
+						b.add(0, 1, -1);
+						locs.add(b.clone());
+						b.add(0, -1, 2);
 						f = BlockFace.SOUTH;
 					}
 					break;
 				case ASCENDING_SOUTH:
+<<<<<<< Updated upstream
 					//locs.add(b.clone());
+=======
+>>>>>>> Stashed changes
 					if (f == BlockFace.SOUTH) {
+						locs.add(b.clone());
 						// UP - south>north
-						b.add(0, 0, 1);
+						b.add(0, 1, 1);
+						locs.add(b.clone());
 						f = BlockFace.SOUTH;
 					} else {
+						//b.subtract(0, 1, 0);
+						locs.add(b.clone());
 						// DOWN - north>south
-						b.subtract(0, 0, 1);
+						b.add(0, 1, -1);
+						locs.add(b.clone());
+						b.subtract(0, 1, 2);
 						f = BlockFace.NORTH;
 					}
 					break;
 				case ASCENDING_WEST:
+<<<<<<< Updated upstream
 					//locs.add(b.clone());
+=======
+>>>>>>> Stashed changes
 					if (f == BlockFace.WEST) {
+						locs.add(b.clone());
 						// UP - west>east
-						b.add(-1, 0, 0);
+						b.add(-1, 1, 0);
+						locs.add(b.clone());
 						f = BlockFace.WEST;
 					} else {
+						//b.subtract(0, 1, 0);
+						locs.add(b.clone());
 						// DOWN - east>west
-						b.subtract(-1, 0, 0);
+						b.add(-1, 1, 0);
+						locs.add(b.clone());
+						b.add(2, -1, 0);
 						f = BlockFace.EAST;
 					}
 					break;

@@ -1,6 +1,7 @@
 package com.movies22.cashcraft.tc.api;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -183,7 +184,10 @@ public class MinecartMember implements Comparable<MinecartMember> {
 		if(this.route == null) {
 			return;
 		}
-		if (this.route.get(0).locs.size() != 0) {
+		Optional<PathOperation> op = this.route.stream().filter(a -> a.locs.contains(l)).findFirst();
+		if(op.isEmpty()) return;
+		op.get().locs.subList(0, op.get().locs.indexOf(l)+1).clear();
+		/*if (this.route.get(0).locs.size() != 0) {
 			if (this.route.get(0).locs.indexOf(l) > -1) {
 				this.lastCon = this.route.get(0).clone();
 				this.route.get(0).locs.remove(0);
@@ -199,7 +203,12 @@ public class MinecartMember implements Comparable<MinecartMember> {
 				this.lastCon = this.route.get(0).clone();
 				this.route.remove(0);
 			}
+<<<<<<< Updated upstream
 		}
+=======
+		}*/
+		this.route.subList(0, this.route.indexOf(op.get())).clear();
+>>>>>>> Stashed changes
 	}
 
 	public void setLocalRoute(List<PathOperation> route) {
